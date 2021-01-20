@@ -1,0 +1,773 @@
+---
+title: "Bayesian networks: discrete case"
+author: "V.N. Gudivada"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    number_sections: true
+    css: styles.css
+#  pdf_document:
+#    number_sections: true
+# output: html_document
+# output: html_notebook
+bibliography: pgm.bib 
+csl: ieee-with-url.csl
+linkcolor: blue
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+# Authoring with RMarkdown
+
+![](graphics/rmarkdown-wizards.png)
+
+[Source](https://github.com/allisonhorst/stats-illustrations/raw/master/rstats-artwork/rmarkdown_wizards.png)
+
+---
+nocite: |
+  @Scutari-2014-bayesian-networks-with-examples-in-R
+---
+
+# Reference
+
+<div id="refs"></div>
+
+
+
+<!-- Scutari, Marco and Jean-Baptiste Denis. Bayesian Networks: With Examples in R. 1st edition. Boca Raton, Florida: Chapman and Hall/CRC, 2014.
+-->
+
+
+# A Probabilistic Graphical Model (PGM)
+
+```{r libraries, include=FALSE}
+library("tidyverse")
+library("visNetwork")
+```
+
+- Directed Bayesian networks are Directed Acyclic Graphs (DAGs)
+- Dependency relationships (not necessarily causal relationships)
+
+```{r, echo=FALSE}
+topic_nodes <- read_csv("data/nodes.csv")
+topic_edges <- read_csv("data/edges.csv")
+
+visNetwork(topic_nodes,topic_edges) %>%
+  visEdges(color="purple", arrows = "to") %>%
+  visLegend() %>%
+  visOptions(highlightNearest = list(enabled = T, degree = 2, hover = T))
+```
+
+# Problem statement: Who takes the train to work?
+
+1. Demographic predictors
+
+  - Age (A): **young** for individuals below 30 years; **adult** for individuals between 30 and 60 years old; and **mature** for people older than 60.
+  - Gender (G): male (**M**) or female (**F**)
+
+2. Socioeconomic indicators
+
+  - Education level (E): the highest level of education completed by the individual: high school (**high**), or university degree (**uni**).
+  - Occupation (O): employee (**emp**) or a selfemployed (**self**) worker.
+  - City of residence (C): the size of the city the individual lives in: **small** or **big**
+
+3. Prediction target
+
+  - Transport type (T): transport preferred by the individual: **car**, **train**, or **other**
+
+# bnlearn - an R package for Bayesian network learning
+
+```{r, echo=TRUE}
+library(bnlearn)
+```
+
+## Define the Bayesian network
+
+```{r define-nodes, echo=TRUE}
+dag <- empty.graph(nodes = c("A", "G", "E", "O", "C", "T"))
+```
+
+```{r, echo=TRUE}
+dag
+```
+
+```{r define-edges, echo=TRUE}
+dag <- set.arc(dag, from = "A", to = "E")
+dag <- set.arc(dag, from = "G", to = "E")
+dag <- set.arc(dag, from = "E", to = "O")
+dag <- set.arc(dag, from = "E", to = "C")
+dag <- set.arc(dag, from = "O", to = "T")
+dag <- set.arc(dag, from = "C", to = "T")
+```
+
+```{r, echo=TRUE}
+dag
+```
+
+## A faster/alternative way to define the Bayesian network
+
+
+```{r, echo=TRUE}
+dag2 <- empty.graph(nodes = c("A", "G", "E", "O", "C", "T"))
+
+arc.set <- matrix(c("A", "E",
+      "G", "E",
+      "E", "O",
+      "E", "C",
+      "O", "T",
+      "C", "T"),
+    byrow = TRUE, ncol = 2,
+    dimnames = list(NULL, c("from", "to")))
+
+arcs(dag2) <- arc.set
+```
+
+```{r, echo=TRUE}
+dag2
+```
+
+## Both approaches result in the same DAG
+
+```{r, echo=TRUE}
+all.equal(dag, dag2)
+```
+
+## What happens when you insert a cycle into DAG?
+
+```{r, echo=TRUE}
+try(set.arc(dag, from = "T", to = "E"))
+```
+
+
+# Exploring the bn object
+
+```{r, echo=TRUE}
+nodes(dag)
+```
+
+```{r, echo=TRUE}
+arcs(dag)
+```
+
+
+# Joint probability as a product of conditional probabilitiies
+
+Use the `modelstring` function to generate the product of conditional probabilities.
+
+```{r, echo=TRUE}
+modelstring(dag)
+```
+
+# Factorization
+
+- DAG represents the global distribution in terms of a set of smaller local distributions, one for each variable.
+- Significant reduction in the number of parameters to be estimated/learned.
+
+$$\operatorname{Pr}(\mathrm{A}, \mathrm{G}, \mathrm{E}, 0, \mathrm{C}, \mathrm{T})=\operatorname{Pr}(\mathrm{A}) \operatorname{Pr}(\mathrm{G}) \operatorname{Pr}(\mathrm{E} \mid \mathrm{A}, \mathrm{G}) \operatorname{Pr}(0 \mid \mathrm{E}) \operatorname{Pr}(\mathrm{C} \mid \mathrm{E}) \operatorname{Pr}(\mathrm{T} \mid 0, \mathrm{C})$$
+
+# Specify joint probability distribution over the random variables
+
+
+```{r, echo=TRUE}
+A.lv <- c("young", "adult", "old") # age
+G.lv <- c("M", "F") # gender
+E.lv <- c("high", "uni") # education
+O.lv <- c("emp", "self") # occupation
+C.lv <- c("small", "big") # city of residence
+T.lv <- c("car", "train", "other") # mode of transport
+```
+
+Marginal probability distributions for **Age** and **Gender** variables:
+
+```{r, echo=TRUE}
+A.prob <- array(c(0.30, 0.50, 0.20), dim = 3, 
+                dimnames = list(A = A.lv))
+A.prob
+```
+
+```{r, echo=TRUE}
+G.prob <- array(c(0.60, 0.40), dim = 2, 
+                dimnames = list(G = G.lv))
+G.prob
+```
+
+Conditional probability distributions for **Occupation** and **City** of residence variables:
+
+```{r, echo=TRUE}
+O.prob <- array(c(0.96, 0.04, 0.92, 0.08), dim = c(2, 2),
+            dimnames = list(O = O.lv, E = E.lv))
+O.prob
+```
+
+
+```{r, echo=TRUE}
+C.prob <- array(c(0.25, 0.75, 0.20, 0.80), dim = c(2, 2),
+            dimnames = list(C = C.lv, E = E.lv))
+C.prob
+```
+
+Alternative way to specify probability distributions for one- and two-dimensional distributions:
+
+```{r, echo=TRUE}
+C.prob <- matrix(c(0.25, 0.75, 0.20, 0.80), ncol = 2,
+            dimnames = list(C = C.lv, E = E.lv))
+C.prob
+```
+
+Conditional Probability Tables (CPTs) for **Education** and **Transport** are modeled using three-dimensional tables:
+
+```{r, echo=TRUE}
+E.prob <- array(c(0.75, 0.25, 0.72, 0.28, 0.88, 0.12, 0.64,
+            0.36, 0.70, 0.30, 0.90, 0.10), dim = c(2, 3, 2),
+            dimnames = list(E = E.lv, A = A.lv, G = G.lv))
+E.prob
+```
+
+```{r, echo=TRUE}
+T.prob <- array(c(0.48, 0.42, 0.10, 0.56, 0.36, 0.08, 0.58,
+            0.24, 0.18, 0.70, 0.21, 0.09), dim = c(3, 2, 2),
+            dimnames = list(T = T.lv, O = O.lv, C = C.lv))
+```
+
+The joint probability distribution has 143 paramters, whereas the DAG approach has only 21 parameters.
+
+# Fully-specified Bayesian network
+
+Has two components:
+1. DAG
+2. Marginal and conditional probability tables
+
+We can recreate the DAG using the **model2network** function:
+
+
+
+```{r, echo=TRUE}
+dag3 <- model2network("[A][G][E|A:G][O|E][C|E][T|O:C]")
+all.equal(dag, dag3)
+```
+
+# bn.fit class
+
+We can combine our DAG defined earlier with CPTs to create an object of the bn.fit class: 
+
+```{r, echo=TRUE}
+cpt <- list(A = A.prob, G = G.prob, E = E.prob, O = O.prob, 
+        C = C.prob, T = T.prob)
+
+bn <- custom.fit(dag, cpt)
+```
+
+Number of parameters of the model:
+
+```{r, echo=TRUE}
+nparams(bn)
+```
+
+Number of edges in the model:
+
+```{r, echo=TRUE}
+arcs(bn)
+```
+
+Print the CPT of the C random variable:
+
+```{r, echo=TRUE}
+bn$C
+```
+
+Extract the values in the CPT for later use:
+
+```{r, echo=TRUE}
+C.cpt <- coef(bn$C)
+```
+
+Print all CPTs in the model:
+
+```{r, echo=TRUE}
+bn
+```
+
+# Estimating the model parameters from an observed sample
+
+```{r, echo=TRUE}
+survey <- read.table("data/survey.txt", header = TRUE)
+```
+
+
+```{r, echo=TRUE}
+class(survey)
+```
+```{r, echo=TRUE}
+str(survey)
+```
+
+```{r, echo=TRUE}
+names(survey)
+```
+
+```{r, echo=TRUE}
+class(survey$A)
+```
+```{r, echo=TRUE}
+survey[] <- lapply( survey, factor)
+```
+
+```{r, echo=TRUE}
+str(survey)
+```
+
+
+```{r, echo=TRUE}
+class(survey$A)
+```
+
+```{r, echo=TRUE}
+head(survey)
+```
+
+Estimate parameters with the corresponding empirical frequencies in the data -- classic **frequentist** and **maximum likelihood estimates (MLE)**.
+
+For example, to estimate $\operatorname{Pr}}(0=&\text { emp } \mid \mathrm{E}=\mathrm{high})$:
+
+$$\begin{aligned} \widehat{\operatorname{Pr}}(0=&\text { emp } \mid \mathrm{E}=\mathrm{high}) = \frac{\widehat{\operatorname{Pr}}(0=\mathrm{emp}, \mathrm{E}=\mathrm{high})}{\widehat{\operatorname{Pr}}(\mathrm{E}=\mathrm{high})} \\ &=\frac{\text { # } (0=\text { emp and } \mathrm{E}=\mathrm{high})}{\text { # } (\mathrm{E}=\mathrm{high})} \end{aligned}$$
+
+In **bnlearn**, we compute MLE using the **bn.fit** function. 
+
+
+```{r, echo=TRUE}
+options(digits = 3)
+bn.mle <- bn.fit(dag, data = survey, method = "mle")
+```
+The **bn.fit()** returns an object of class bn.fit
+
+Note: **custom.fit()** and **bn.fit()** are complementary.**custom.fit()** constructs a BN using a set of *custom* parameters specified by the user, whereas **bn.fit()** estimates the parameters from the sampled data.
+
+We can also compute the parameters manually using the sampled data:
+
+```{r, echo=TRUE}
+prop.table(table(survey[, c("O", "E")]), margin = 2)
+```
+
+Verify that the above numbers agree with the corresponding numbers computed using the **bn.fit()**
+
+```{r, echo=TRUE}
+bn.mle$O
+```
+
+We can also estimate the CPTs using their posterior distributions from a uniform prior over each CPT.
+
+```{r, echo=TRUE}
+bn.bayes <- bn.fit(dag, data = survey, method = "bayes", 
+              iss = 10)
+```
+- *iss* (imaginary sample size or equivalent sample size) is an optional argument.
+- *iss* indicates how much weight is assigned to the prior distribution compared to the data.
+
+
+```{r, echo=TRUE}
+bn.bayes$O
+```
+
+Posterior estimates are farther from both 0 and 1 than the corresponding MLE estimates -- prior distribution influence.
+
+Entails advantages:
+
+1. Regularization conditions of model estimation and inference methods are met.
+2. No sparse CPTs.
+3. Due to robustness in estimation, resulting BNs will have better predictive power.
+
+What happens when we increase the value of *iss*?
+
+Posterior distribution heads towards the uniform distribution (used as the prior).
+
+
+```{r, echo=TRUE}
+bn.bayes <- bn.fit(dag, data = survey, method = "bayes", 
+              iss = 20)
+bn.bayes$O
+```
+
+# Learning the DAG structure
+
+A complex task:
+1. The number of DAGs increases super-exponentially as the number of nodes grows -- not practical to investigate all.
+2. The space of possible DAGs is different from real spaces (e.g., $\mathbb{R}, \mathbb{R}^2$) -- non-continuous with a finite number of elements. Exploration requires *ad-hoc* algorithms.
+
+
+Statistical criteria for evaluating DAGs:
+1. Conditional independence tests
+2. Network scores
+
+
+## Conditional independence tests
+
+- Each edge/arc encodes a probabilistic dependence.
+- Conditional independence tests assess whether the dependence is supported by the data. 
+- Consider the edge for inclusion in the DAG if the null hypothesis (of conditional independence) is rejected.
+- Consider the edge $E \longrightarrow T)$
+- The null hypothesis is that Travel is probabilistically independent from the Education conditional on its parents: $H_{0}: \mathrm{T} \Perp_{P} \mathrm{E} \mid\{0, \mathrm{C}\}$
+- Alternative hypothesis: $H_{1}: \mathrm{T} \not \Lambda_{P} \mathrm{E} \mid\{0, \mathrm{C}\}$
+
+
+Test the null hypothesis using the log-likelihood ratio $G^{2}$ or Pearson's $\chi^{2}$ to test for conditional independence (instead of marginal independence). 
+
+- For $G^{2}$, the test statistic is of the form: 
+
+$$G^{2}(\mathrm{~T}, \mathrm{E} \mid 0, \mathrm{C})=\sum_{t \in \mathrm{T}} \sum_{e \in \mathrm{E}} \sum_{k \in \mathrm{O} \times \mathrm{C}} {n_{t e k}} \log \frac{n_{t e k} n_{++k}}{n_{t+k} n_{+e k}}$$
+
+Notation: $n_{++k}$ denotes the number of observations for $k$ obtained by summing over all categories of travel mode ($T$) and education ($E$).
+
+For Pearson's $\chi^{2}$,
+
+$$\chi^{2}(\mathrm{~T}, \mathrm{E} \mid 0, \mathrm{R})=\sum_{t \in \mathrm{T}} \sum_{e \in \mathrm{E}} \sum_{k \in 0 \times \mathrm{R}} \frac{\left(n_{t e k}-m_{t e k}\right)^{2}}{m_{t e k}}$$ 
+where where $m_{t e k}=\frac{n_{t+k} n_{+e k}}{n_{++k}}$
+
+Both tests have an asymptotic $\chi^2$ distribution under the null hypothesis.
+
+Degrees of freedom:
+
+```{r, echo=TRUE}
+(nlevels(survey[, "T"]) - 1) * (nlevels(survey[, "E"]) - 1) * 
+  (nlevels(survey[, "O"]) * nlevels(survey[, "C"]))
+```
+
+The **ci.test()** of **bnlearn** implements both $G^2$ and $\chi^2$ tests. $G^2$ test is equivalent to the **mutual information** test from *information theory*.
+
+```{r, echo=TRUE}
+ci.test("T", "E", c("O", "C"), test = "mi", data = survey)
+```
+$\chi^2$ test:
+
+```{r, echo=TRUE}
+ci.test("T", "E", c("O", "C"), test = "x2", data = survey)
+```
+
+Automate the test of significance using the **src.strength()** function. 
+
+```{r, echo=TRUE}
+options(digits = 2)
+arc.strength(dag, data = survey, criterion = "x2")
+```
+All edges except the one from $O$ to $T$ have p-values smaller than 0.05 and are well supported by the data.
+ 
+
+## Network scores
+
+Network scores focus on the DAG as a whole. Bayesian Information criterion (BIC) is one such score.
+
+$\begin{aligned} \mathrm{BIC}= \log \widehat{\operatorname{Pr}}(\mathrm{A}, \mathrm{G}, \mathrm{E}, 0, \mathrm{C}, \mathrm{T}) - \frac{d}{2} \log n=\\ \left[\log \widehat{\operatorname{Pr}}(\mathrm{A})-\frac{d_{\mathrm{A}}}{2} \log n\right]+\left[\log \widehat{\operatorname{Pr}}(\mathrm{G})-\frac{d_{\mathrm{G}}}{2} \log n\right]+\\+\left[\log \widehat{\operatorname{Pr}}(\mathrm{E} \mid \mathrm{A}, \mathrm{G})-\frac{d_{\mathrm{E}}}{2} \log n\right]+\left[\log \widehat{\operatorname{Pr}}(0 \mid \mathrm{E})-\frac{d_{0}}{2} \log n\right]+\\+\left[\log \widehat{\operatorname{Pr}}(\mathrm{C} \mid \mathrm{E})-\frac{d_{\mathrm{C}}}{2} \log n\right]+\left[\log \widehat{\operatorname{Pr}}(\mathrm{T} \mid 0, \mathrm{C})-\frac{d_{\mathrm{T}}}{2} \log n\right] \end{aligned}$
+
+
+- $n$ is the sample size, $d$ is the number of parameters of the whole network.
+- $d_{\mathrm{A}}, d_{\mathrm{S}}, d_{\mathrm{E}}, d_{0}, d_{\mathrm{R}}$ and $d_{\mathrm{T}}$ are the numbers of parameters associated with each node. 
+
+Bayesian Dirichlet equivalent uniform (BDeu) posterior probability.
+
+BIC and BDe assign higher scores to DAGs that fit the data better.
+
+
+```{r, echo=TRUE}
+set.seed(456)
+options(digits = 6)
+score(dag, data = survey, type = "bic")
+```
+
+
+```{r, echo=TRUE}
+score(dag, data = survey, type = "bde", iss = 10)
+```
+
+
+```{r, echo=TRUE}
+score(dag, data = survey, type = "bde", iss = 1)
+```
+
+Compute scores before and after adding the edge $E \longrightarrow T$
+
+```{r, echo=TRUE}
+dag4 <- set.arc(dag, from = "E", to = "T")
+nparams(dag4, survey)
+score(dag4, data = survey, type = "bic")
+```
+
+$E \longrightarrow T$ does not help.
+
+Scores can also be used to compare completely different networks.
+
+```{r, echo=TRUE}
+rnd <- random.graph(nodes = c("A", "G", "E", "O", "C", "T"))
+modelstring(rnd)
+```
+
+```{r, echo=TRUE}
+score(rnd, data = survey, type = "bic")
+```
+
+Several algorithms for structure learning. One such is **hill-climbing** algorithm.
+
+```{r, echo=TRUE}
+learned <- hc(survey)
+modelstring(learned)
+```
+
+
+```{r, echo=TRUE}
+score(learned, data = survey, type = "bic")
+```
+
+Change the default score = "bic" to score = "bde"
+
+```{r, echo=TRUE}
+learned2 <- hc(survey, score = "bde")
+```
+
+The **arc.strength()** function reports the change in the score due to an edge/arc removal as the arc's strength when criterion is a network score.
+
+```{r, echo=TRUE}
+options(digits=3)
+arc.strength(learned, data = survey, criterion = "bic")
+```
+
+
+```{r, echo=TRUE}
+arc.strength(dag, data = survey, criterion = "bic")
+```
+
+# Answering questions using discrete BNs
+
+1. Conditional independence queries (whether a variable is associated to another)
+2. Conditional probability queries (distribution of one or more variables under non-trivial conditioning)
+3. Most likely explanation queries (most likely outcome of one or more variables under non-trivial conditioning)
+
+```{r, echo=TRUE}
+options(digits = 3)
+dsep(dag, x = "G", y = "C")
+```
+
+
+```{r, echo=TRUE}
+dsep(dag, x = "O", y = "C")
+```
+
+
+```{r, echo=TRUE}
+path(dag, from = "G", to = "C")
+```
+
+
+```{r, echo=TRUE}
+dsep(dag, x = "G", y = "C", z = "E")
+```
+
+
+```{r, echo=TRUE}
+dsep(dag, x = "O", y = "C", z = "E")
+```
+
+
+```{r, echo=TRUE}
+dsep(dag, x = "A", y = "G")
+```
+
+
+```{r, echo=TRUE}
+dsep(dag, x = "A", y = "G", z = "E")
+```
+
+## Exact inference
+
+Implemented in package gRain (gRaphical model inference). 
+
+Transforms the BN into a **junction tree** to speed up the computation of conditional probabilities.
+
+```{r, echo=TRUE}
+library(gRain)
+```
+
+
+```{r, echo=TRUE}
+junction <- compile(as.grain(bn))
+```
+
+
+```{r, echo=TRUE}
+options(digits = 4)
+querygrain(junction, nodes = "T")$T
+jgender <- setEvidence(junction, nodes = "G", states = "F")
+querygrain(jgender, nodes = "T")$T
+```
+
+
+```{r, echo=TRUE}
+jres <- setEvidence(junction, nodes = "R", states = "small")
+querygrain(jres, nodes = "T")$T
+```
+
+
+```{r, echo=TRUE}
+jedu <- setEvidence(junction, nodes = "E", states = "high")
+GxT.cpt <- querygrain(jedu, nodes = c("G", "T"), type = "joint")
+GxT.cpt
+```
+
+
+```{r, echo=TRUE}
+querygrain(jedu, nodes = c("G", "T"), type = "marginal")
+```
+
+
+```{r, echo=TRUE}
+querygrain(jedu, nodes = c("G", "T"), type = "conditional")
+```
+
+
+```{r, echo=TRUE}
+dsep(bn, x = "G", y = "T", z = "E")
+```
+
+
+```{r, echo=TRUE}
+GxT.ct = GxT.cpt * nrow(survey)
+```
+
+
+```{r, echo=TRUE}
+chisq.test(GxT.ct)
+```
+
+
+```{r, echo=TRUE}
+set.seed(123)
+```
+
+
+```{r, echo=TRUE}
+cpquery(bn, event = (G == "M") & (T == "car"), 
+          evidence = (E == "high"))
+```
+
+
+```{r, echo=TRUE}
+cpquery(bn, event = (G == "M") & (T == "car"), 
+            evidence = (E == "high"), n = 10^6)
+```
+
+
+```{r, echo=TRUE}
+set.seed(567)
+cpquery(bn, event = (G == "M") & (T == "car"),
+            evidence = list(E = "high"), method = "lw")
+```
+
+
+```{r, echo=TRUE}
+set.seed(123)
+cpquery(bn, event = (G == "M") & (T == "car"),
+  evidence = ((A == "young") & (E == "uni")) | (A == "adult"))
+```
+
+```{r, echo=TRUE}
+GxT <- cpdist(bn, nodes = c("G", "T"),
+         evidence = (E == "high"))
+head(GxT)
+```
+
+
+```{r, echo=TRUE}
+options(digits = 3)
+prop.table(table(GxT))
+```
+
+
+```{r, echo=TRUE}
+graphviz.plot(dag)
+```
+
+
+```{r, echo=TRUE}
+hlight <- list(nodes = nodes(dag), arcs = arcs(dag), 
+                  col = "grey", textCol = "grey")
+```
+
+
+```{r, echo=TRUE}
+pp <- graphviz.plot(dag, highlight = hlight)
+```
+
+```{r, echo=TRUE}
+# edgeRenderInfo() from the Rgraphviz package
+# edgeRenderInfo() modifies how the arcs are formatted
+library(Rgraphviz)
+```
+
+```{r, echo=TRUE}
+str(edgeRenderInfo(pp))
+```
+
+```{r, echo=TRUE}
+edgeRenderInfo(pp) <- 
+  list(col = c("G~E" = "black", "E~C" = "black"),
+       lwd = c("G~E" = 3, "E~C" = 3))
+```
+
+
+```{r, echo=TRUE}
+# nodeRenderInfo() -- modifies how the nodes are formatted
+nodeRenderInfo(pp) <- 
+  list(col = c("G" = "black", "E" = "black", "C" = "black"),
+    textCol = c("G" = "black", "E" = "black", "C" = "black"),
+    fill = c("E" = "grey"))
+```
+
+
+```{r, echo=TRUE}
+renderGraph(pp)
+```
+
+
+```{r, echo=TRUE}
+bn.fit.barchart(bn.mle$T, main = "Travel", 
+  xlab = "Pr(T | C,O)", ylab = "")
+```
+
+
+```{r, echo=TRUE}
+Evidence <- 
+  factor(c(rep("Unconditional",3), rep("Female", 3), 
+           rep("Small City",3)),
+         levels = c("Unconditional", "Female", "Small City"))
+
+Travel <- factor(rep(c("car", "train", "other"), 3),
+           levels = c("other", "train", "car"))
+
+distr <- data.frame(Evidence = Evidence, Travel = Travel,
+           Prob = c(0.5618, 0.2808, 0.15730, 0.5620, 0.2806,
+                    0.1573, 0.4838, 0.4170, 0.0990))
+```
+
+
+```{r, echo=TRUE}
+head(distr)
+```
+
+```{r, echo=TRUE}
+# barchart() is defined in R lattice package
+library(lattice)
+```
+
+
+```{r, echo=TRUE}
+barchart(Travel ~ Prob | Evidence, data = distr,
+   layout = c(3, 1), xlab = "Probability",
+   scales = list(alternating = 1, tck = c(1, 0)),
+   strip = strip.custom(factor.levels =
+     c(expression(Pr(T)),
+       expression(Pr({T} * " | " * {G == F})),
+       expression(Pr({T} * " | " * {C == small})))),
+   panel = function(...) {
+     panel.barchart(...)
+     panel.grid(h = 0, v = -1)
+   })
+```
