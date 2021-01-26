@@ -56,6 +56,7 @@ exports.postAddTopic = (req, res, next) => {
   const alias = req.body.alias;
   const aliases = req.body.aliases;
   const paragraph = req.body.paragraph;
+  req.session.confirmCreation = name;
 
   Topic.create({
     domain: domain,
@@ -98,7 +99,8 @@ exports.postAddTopic = (req, res, next) => {
 };
 
 exports.getTopics = (req, res, next) => {
-  
+  const confirmCreation = ((req.session.confirmCreation)?req.session.confirmCreation:'');
+  req.session.confirmCreation = null;
   if (req.session.isAdmin){
     Topic.findAll().then(topics =>{
     res.render('author/topics', {
@@ -110,10 +112,11 @@ exports.getTopics = (req, res, next) => {
       productCSS: true,
       isAuthenticated: req.session.isLoggedIn,
       isAdmin: req.session.isAdmin,
-      errors: []
+      errors: [],
+      confirmCreation: confirmCreation
     })})} else {
     Topic.findAll({where:{userId:req.session.user.id}}).then(topics =>{
-      res.render('topics', {
+      res.render('author/topics', {
         topics: topics,
         pageTitle: 'Topics',
         path: '/',
@@ -122,7 +125,8 @@ exports.getTopics = (req, res, next) => {
         productCSS: true,
         isAuthenticated: req.session.isLoggedIn,
         isAdmin: req.session.isAdmin,
-        errors: []
+        errors: [],
+        confirmCreation: confirmCreation
       })})}
 };
 

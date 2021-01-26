@@ -7,7 +7,18 @@
     <body>
         <%- include('../includes/navigation.ejs') %>
             <div class="container py-5" id="content">
+               
+
                 <div class="col-md-12 mx-auto">
+                    <% if (confirmCreation) { %>
+                    <div class=row>
+                        <div class="col-12">
+                            <div class="user-message user-message--topic--created">
+                                Topic <%=confirmCreation%> was created
+                        </div>
+                    </div>
+                    </div>
+                    <% } %>
                     <div class=row>
                         <div class="col-12">
                             <h2>List of Topics</h2>

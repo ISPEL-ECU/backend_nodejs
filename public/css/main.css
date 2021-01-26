@@ -185,6 +185,12 @@ main {
   color: red;
 }
 
+.user-message--topic--created {
+  border-color: blue;
+  background: rgb(126, 162, 204);
+  color: blue;
+}
+
 .card__header, .card__content {
   padding: 1rem;
 }
