@@ -1,0 +1,88 @@
+<%- include('../includes/head.ejs') %>
+    <link rel="stylesheet" href="/css/forms.css">
+
+
+    </head>
+
+    <body>
+        <%- include('../includes/navigation.ejs') %>
+
+            <div class="container py-5" id="content">
+                <div class="row">
+                    <div class="col-md-12 mx-auto">
+                        <h2>User Management</h2>
+                    </div>
+                </div>
+
+                <form action="/admin/user/<%=user.id%>" method="POST" enctype="multipart/form-data">
+                    <div class="form-group row required">
+
+                        <div class="col-sm-4">
+                            <label for="firstName" class="control-label">First Name</label>
+                            <input type="text" class="form-control" name="firstName" id="LastName"
+                                value="<%=user.firstName%>" required>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <label for="lastName" class="control-label">Last Name</label>
+                            <input type="text" class="form-control" name="lastName" id="lastName"
+                                value="<%=user.lastName%>" required>
+
+                        </div>
+
+                        <div class="col-sm-4">
+                            <label for="email" class="control-label">Email</label>
+                            <input type="email" class="form-control" name="email" id="email" value="<%=user.email%>"
+                                required>
+
+                        </div>
+
+                    </div>
+                    <div class="form-group row required">
+
+                        <div class="col-sm-4">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" name="password" id="password">
+                        </div>
+
+                        <div class="col-sm-4">
+                            <label for="admin">Admin</label>
+                            <input type="checkbox" class="form-control" name="admin" id="admin" <% if (user.admin){%>
+                            checked <%}%>>
+
+                        </div>
+
+                        <div class="col-sm-4">
+                            <label for="domainIds" class="control-label">Domains</label>
+                            <select type="text" class="selectpicker" multiple size="5" style="width: 100%;"
+                                name="domainIds" id="domainIds" required>
+                                <% for (const i in domains) {%>
+                                    <option value="<%=domains[i].id%>" <% if (selectedDomains.includes(domains[i].id)){
+                                        %>
+                                        selected
+                                        <%}%>
+                                            >
+                                            <%=domains[i].name%>
+                                    </option>
+                                    <%}%>
+                            </select>
+
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-group row required">
+                        <div class="col-sm-6">
+                            * indicates required fields
+                        </div>
+                        <div class="col-sm-6">
+                            <button type="submit" class="btn btn-primary px-4 float-right">Submit</button>
+                        </div>
+                    </div>
+                </form>
+
+
+            </div>
+
+            <%- include('../includes/end.ejs') %>

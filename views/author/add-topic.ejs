@@ -1,0 +1,165 @@
+<%- include('../includes/head.ejs') %>
+
+
+    <script>
+        function keywordInput(keywordInpt) {
+            if (keywordInpt.value.length > 0) {
+                document.getElementById('keywords').disabled = true;
+                document.getElementById('keywords').required = false;
+            } else {
+                document.getElementById('keywords').disabled = false;
+                document.getElementById('keywords').required = true;
+            }
+        }
+        function aliasInput(aliasInpt) {
+            if (aliasInpt.value.length > 0) {
+                document.getElementById('aliases').disabled = true;
+            } else {
+                document.getElementById('aliases').disabled = false;
+            }
+        }
+
+        function onNameChange() {
+            let name = document.getElementById('name').value.toLowerCase().replace(/ /g, "-");
+            let value = JSON.parse(document.getElementById('domain').value)['code'] + ":" + JSON.parse(document.getElementById('area').value)['code'] + ":";
+            document.getElementById("topicId").value = value + name;
+
+
+
+        }
+
+
+
+
+        function topicInput() {
+
+            return (JSON.parse(document.getElementById('domain').value)['code'] + ":" + JSON.parse(document.getElementById('area').value)['code'] + ":");
+        }
+
+
+    </script>
+    </head>
+
+    <body>
+        <div class="wrapper">
+            <%- include('../includes/navigation.ejs') %>
+                <div class="container py-5" id="content">
+                    <div class="row">
+                        <div class="col-md-12 mx-auto">
+                            <form action="/author/add-topic" method="POST" enctype="multipart/form-data">
+                                <div class="form-group row required">
+
+                                    <div class="col-sm-4">
+                                        <label for="domain">Domain Name</label>
+                                        <select type="text" class="form-control" name="domain" id="domain">
+                                            <% for (const i in allDomains) {%>
+                                                <option
+                                                    value='{"id":"<%=allDomains[i].id%>","code":"<%=allDomains[i].shortName%>"}'>
+                                                    <%= allDomains[i].name%>
+                                                </option>
+                                                <%}%>
+                                        </select>
+
+
+                                    </div>
+
+                                    <div class="col-sm-4">
+                                        <label for="topicId">Topic ID | to be auto-generated</label>
+                                        <input type="text" class="form-control" name="topicId" id="topicId" readonly>
+
+                                    </div>
+
+                                    <div class="col-sm-4">
+                                        <label for="name" class="control-label">Topic Name</label>
+                                        <input type="text" class="form-control" name="name" id="name"
+                                            onkeyup="onNameChange()" required>
+
+                                    </div>
+
+                                </div>
+                                <div class="form-group row required">
+                                    <div class="col-sm-4">
+                                        <label for="area">Topic Area</label>
+                                        <select type="text" class="form-control" name="area" id="area"
+                                            onchange="onNameChange()">
+                                            <% for (const i in allAreas) {%>
+                                                <option
+                                                    value='{"id":"<%=allAreas[i].id%>","code":"<%=allAreas[i].shortName%>"}'>
+                                                    <%= allAreas[i].name%>
+                                                </option>
+                                                <%}%>
+                                        </select>
+
+
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <label for="keywords" class="control-label">Keywords</label>
+                                        <input list="keywords" class="form-control" name="keyword" id="keyword"
+                                            onchange="keywordInput(this)">
+                                        <select name="keywords" class="form-control" id="keywords" size="4" multiple
+                                            required>
+
+                                            <% for (const i in allKeywords) {%>
+                                                <option value="<%=allKeywords[i].id%>">
+                                                    <%= allKeywords[i].value%>
+                                                </option>
+                                                <%}%>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <label for="aliases" class="control-label">Aliases</label>
+                                        <input list="aliases" class="form-control" name="alias" id="alias"
+                                            onchange="aliasInput(this)">
+                                        <select name="aliases" class="form-control" id="aliases" size="4" multiple
+                                            required>
+                                            <%console.log(allAliases)%>
+                                                <% for (const j in allAliases) {%>
+                                                    <option value="<%=allAliases[j].id%>">
+                                                        <%= allAliases[j].value%>
+                                                    </option>
+                                                    <%}%>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group row required">
+                                    <div class="col-sm-12">
+                                        <label for="paragraph" class="control-label">Teaser paragraph</label>
+                                        <textarea name="paragraph" class="form-control" id="paragraph" rows="10"
+                                            required></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group row required">
+                                    <div class="col-sm-6">
+                                        <label for="contentUpload" class="control-label">HTML File</label>
+                                        <input type="file" name="contentUpload" id="contentUpload" accept=".html"
+                                            required>
+
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="rmdUpload">RMD File</label>
+                                        <input type="file" name="rmdUpload" id="rmdUpload" accept=".rmd">
+
+                                    </div>
+                                </div>
+                                <div class="form-group row required">
+                                    <div class="col-sm-6">
+                                        * indicates required fields
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <button type="submit" class="btn btn-primary px-4 float-right">Submit</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+
+
+                    let topicIdField = document.getElementById("topicId");
+                    topicIdField.value = topicInput();
+
+                </script>
+
+                <%- include('../includes/end.ejs') %>

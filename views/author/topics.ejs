@@ -1,0 +1,52 @@
+<%- include('../includes/head.ejs') %>
+    <link rel="stylesheet" href="/css/forms.css">
+
+
+    </head>
+
+    <body>
+        <%- include('../includes/navigation.ejs') %>
+            <div class="container py-5" id="content">
+                <div class="col-md-12 mx-auto">
+                    <div class=row>
+                        <div class="col-12">
+                            <h2>List of Topics</h2>
+                        </div>
+                    </div>
+
+                    <%for (const i in topics) { if (!isAdmin) { %>
+                        <div class="row">
+                            <div class="col-4">
+                                <%=topics[i].name%>
+                            </div>
+                            <div class="col-4">
+                                <%=topics[i].topicId%>
+                            </div>
+                            <div class="col-4">
+                                <a href="/author/topic/<%=topics[i].id%>">
+                                    Content
+                                </a>
+                            </div>
+                        </div>
+                        <%} else {%>
+                            <div class="row">
+                                <div class="col-3">
+                                    <%=topics[i].name%>
+                                </div>
+                                <div class="col-3">
+                                    <%=topics[i].topicId%>
+                                </div>
+                                <div class="col-3">
+                                    <%=topics[i].userId%>
+                                </div>
+                                <div class="col-3">
+                                    <a href="/author/topic/<%=topics[i].id%>">
+                                        Content
+                                    </a>
+                                </div>
+                            </div>
+                            <%}}%>
+                </div>
+
+            </div>
+            <%- include('../includes/end.ejs') %>

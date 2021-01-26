@@ -1,0 +1,42 @@
+<%- include('../includes/head.ejs') %>
+
+
+    </head>
+
+    <body>
+        <%- include('../includes/navigation.ejs') %>
+
+            <div class="container py-5" id="content">
+                <div class="row">
+                    <div class="col-md-12 mx-auto">
+                        <form action="/admin/add-domain" method="POST" enctype="multipart/form-data">
+                            <div class="form-group row required">
+
+                                <div class="col-sm-6">
+                                    <label for="area" class="control-label">Domain Name</label>
+                                    <input type="text" class="form-control" name="name" id="name">
+
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label for="topicId" class="control-label">Domain Code</label>
+                                    <input type="text" class="form-control" name="shortName" id="shortName">
+
+                                </div>
+
+                            </div>
+
+                            <div class="form-group row">
+                                <div class="col-sm-6">
+                                    * indicates required fields
+                                </div>
+                                <div class="col-sm-6">
+                                    <button type="submit" class="btn btn-primary px-4 float-right">Add Domain</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <%- include('../includes/end.ejs') %>
