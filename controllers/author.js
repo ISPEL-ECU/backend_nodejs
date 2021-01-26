@@ -116,7 +116,7 @@ exports.getTopics = (req, res, next) => {
       confirmCreation: confirmCreation
     })})} else {
     Topic.findAll({where:{userId:req.session.user.id}}).then(topics =>{
-      res.render('topics', {
+      res.render('author/topics', {
         topics: topics,
         pageTitle: 'Topics',
         path: '/',
