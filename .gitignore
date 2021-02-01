@@ -1,4 +1,3 @@
 node_modules/
 rmdhtml/*
 !rmdhtml/.gitkeep
-node_modules

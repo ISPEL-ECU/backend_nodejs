@@ -1,5 +1,3 @@
-const nodePandoc = require('node-pandoc');
-
 //import data models
 const Keyword = require('../models/keyword');
 const Topic = require('../models/topic');

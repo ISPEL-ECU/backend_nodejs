@@ -8,6 +8,9 @@ const path = require('path');
 const multer = require("multer");
 var session = require('express-session');
 
+var cors = require('cors')
+
+
 
 
 // initalize sequelize with session store
@@ -47,7 +50,7 @@ const fileStorage = multer.diskStorage({
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
-
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use(multer({
   limits: { fieldSize: 25 * 1024 * 1024 },
