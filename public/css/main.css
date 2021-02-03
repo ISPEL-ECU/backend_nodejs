@@ -85,7 +85,7 @@ main {
   min-width: 175px;
   max-width: 175px;
   position: fixed;
-  align-items: center;
+  font-size: 1.25rem;
   top: 0;
   left: 0;
   height: 100vh;
@@ -103,6 +103,9 @@ main {
   color:black;
 }
 
+.main-sidebar .nav-link a{
+  color: black;
+}
 
 
 #sidebarCollapse {
