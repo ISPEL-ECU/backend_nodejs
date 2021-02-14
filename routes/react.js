@@ -9,7 +9,7 @@ const isAdmin = require('../middleware/is-admin');
 
 const router = express.Router();
 
-
+router.get('/get-topics-search', reactController.getTopicsSearch);
 router.get('/get-topics', reactController.getTopics);
 router.get('/get-selected-topics', reactController.getSelectedTopics);
 router.get('/get-domains', reactController.getDomains);
