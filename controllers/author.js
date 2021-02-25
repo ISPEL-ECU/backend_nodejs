@@ -9,13 +9,13 @@ const User = require('../models/user');
 
 //controller for GET add-topic
 exports.getAddTopic = (req, res, next) => {
-  
-  User.findOne({where:{id:req.session.user.id}}).then(user=>{
+
+  User.findOne({ where: { id: req.session.user.id } }).then(user => {
     return user.getDomains()
-  }).then(domains =>   { 
-  Keyword.findAll().then((allKeywords) => {
-    Alias.findAll().then((allAliases) => {
-         Area.findAll({ where: { domainId: domains.map(x=>x['id']) } }).then((allAreas) => {
+  }).then(domains => {
+    Keyword.findAll().then((allKeywords) => {
+      Alias.findAll().then((allAliases) => {
+        Area.findAll({ where: { domainId: domains.map(x => x['id']) } }).then((allAreas) => {
           res.render('author/add-topic', {
             pageTitle: 'Add Topic',
             path: '/author/add-topic',
@@ -27,33 +27,35 @@ exports.getAddTopic = (req, res, next) => {
             allDomains: domains,
             allAreas: allAreas,
             isAuthenticated: req.session.isLoggedIn,
-            isAdmin: req.session.isAdmin
+            isAdmin: req.session.isAdmin,
+            isFaculty: req.session.isFaculty,
+            isStudent: req.session.isStudent,
+            user: req.session.user,
           })
         })
-      
-    });
-  })});
+
+      });
+    })
+  });
 }
 
 //controller for POST add-topic
 exports.postAddTopic = (req, res, next) => {
-  
+
   const domain = req.body.domain;
   const areaJson = JSON.parse(req.body.area);
   const area = areaJson['id'];
-
-  console.log("area");
-  console.log(area);
   const topicId = req.body.topicId;
   const name = req.body.name;
   const contentFile = req.files['contentUpload'][0];
-  const rmdFile = ((typeof req.files['rmdUpload']!=='undefined')?req.files['rmdUpload'][0]:null);
+  const rmdFile = ((typeof req.files['rmdUpload'] !== 'undefined') ? req.files['rmdUpload'][0] : null);
   const difficulty = req.body.difficulty;
   const keyword = req.body.keyword;
   const keywords = req.body.keywords;
   const alias = req.body.alias;
   const aliases = req.body.aliases;
   const paragraph = req.body.paragraph;
+  const private = req.body.private==="on";
   req.session.confirmCreation = name;
 
   Topic.create({
@@ -64,7 +66,8 @@ exports.postAddTopic = (req, res, next) => {
     name: name,
     teaser: paragraph,
     contentHtml: contentFile.path,
-    contentRmd: ((rmdFile)?rmdFile.path:null)
+    contentRmd: ((rmdFile) ? rmdFile.path : null),
+    isPrivate: private
   }).then((newTopic) => {
     newTopic.setUser(req.session.user.id);
     if (keyword) { //checks if keyword input field was used
@@ -74,9 +77,11 @@ exports.postAddTopic = (req, res, next) => {
         newTopic.addKeyword(newKeyword)
       }).catch(err => console.log(err));
     } else {
-      Keyword.findAll({where:{
-        id: keywords
-      }}).then((newKeywords) => {
+      Keyword.findAll({
+        where: {
+          id: keywords
+        }
+      }).then((newKeywords) => {
         newTopic.addKeywords(newKeywords)
       }).catch(err => console.log(err))
     }
@@ -85,35 +90,22 @@ exports.postAddTopic = (req, res, next) => {
         newTopic.addAlias(newAlias)
       })).catch(err => console.log(err))
     } else {
-      Alias.findAll({where:{ id: aliases }}).then((newAliases) => {
+      Alias.findAll({ where: { id: aliases } }).then((newAliases) => {
         newTopic.addAliases(newAliases)
       }).catch(err => console.log(err))
     }
-    newTopic.setArea(area).then(()=>res.redirect('/author/'));
+    newTopic.setArea(area).then(() => res.redirect('/author/'));
   });
 
-  
-  
+
+
 };
 
 exports.getTopics = (req, res, next) => {
-  const confirmCreation = ((req.session.confirmCreation)?req.session.confirmCreation:'');
+  const confirmCreation = ((req.session.confirmCreation) ? req.session.confirmCreation : '');
   req.session.confirmCreation = null;
-  if (req.session.isAdmin){
-    Topic.findAll().then(topics =>{
-    res.render('author/topics', {
-      topics: topics,
-      pageTitle: 'Topics',
-      path: '/',
-      hasTopics: topics.length > 0,
-      activeTopics: true,
-      productCSS: true,
-      isAuthenticated: req.session.isLoggedIn,
-      isAdmin: req.session.isAdmin,
-      errors: [],
-      confirmCreation: confirmCreation
-    })})} else {
-    Topic.findAll({where:{userId:req.session.user.id}}).then(topics =>{
+  if (req.session.isAdmin) {
+    Topic.findAll().then(topics => {
       res.render('author/topics', {
         topics: topics,
         pageTitle: 'Topics',
@@ -123,9 +115,32 @@ exports.getTopics = (req, res, next) => {
         productCSS: true,
         isAuthenticated: req.session.isLoggedIn,
         isAdmin: req.session.isAdmin,
+        isFaculty: req.session.isFaculty,
+        isStudent: req.session.isStudent,
+        user: req.session.user,
         errors: [],
         confirmCreation: confirmCreation
-      })})}
+      })
+    })
+  } else {
+    Topic.findAll({ where: { userId: req.session.user.id } }).then(topics => {
+      res.render('author/topics', {
+        topics: topics,
+        pageTitle: 'Topics',
+        path: '/',
+        hasTopics: topics.length > 0,
+        activeTopics: true,
+        productCSS: true,
+        isAuthenticated: req.session.isLoggedIn,
+        isAdmin: req.session.isAdmin,
+        isFaculty: req.session.isFaculty,
+        isStudent: req.session.isStudent,
+        user: req.session.user,
+        errors: [],
+        confirmCreation: confirmCreation
+      })
+    })
+  }
 };
 
 exports.getTopic = (req, res, next) => {
@@ -136,11 +151,14 @@ exports.getTopic = (req, res, next) => {
     res.render('author/topic', {
       topic: topic,
       pageTitle: 'Topic',
-      path: '/topic/'+topicId,
+      path: '/topic/' + topicId,
       activeTopics: true,
       productCSS: true,
       isAuthenticated: req.session.isLoggedIn,
       isAdmin: req.session.isAdmin,
+      isFaculty: req.session.isFaculty,
+      isStudent: req.session.isStudent,
+      user: req.session.user,
       errors: []
     })
   });

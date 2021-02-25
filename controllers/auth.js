@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator/check');
 
 const User = require('../models/user');
+const Role = require('../models/role');
 
 exports.getLogin = (req, res, next) => {
   res.render('auth/login', {
@@ -52,7 +53,7 @@ exports.postLogin = (req, res, next) => {
   User.findOne({ where: { email: email } })
     .then(user => {
       if (!user) {
-       return res.status(422).render('auth/login', {
+        return res.status(422).render('auth/login', {
           path: '/login',
           pageTitle: 'Login',
           errorMessage: 'Invalid email or password.',
@@ -69,13 +70,32 @@ exports.postLogin = (req, res, next) => {
           if (doMatch) {
             req.session.isLoggedIn = true;
             req.session.user = user;
-            req.session.isAdmin = user.admin;
-            return req.session.save(err => {
-              console.log(err);
-              res.redirect('/author/');
-            });
-          }
+            user.getRoles().then((roles) => {
+              req.session.isAdmin = false;
+              req.session.isFaculty = false;
+              req.session.isStudent = false;
+              roles.forEach(role => {
+                if (role.roleCode==="1")
+                  {
+                    req.session.isAdmin = true;
+                  } else if (role.roleCode==="2")
+                  {
+                    req.session.isFaculty = true;
+                  } else 
+                  {
+                    req.session.isStudent = true;
+                  }
+              });
+            
+            }).then(() => {
+              return req.session.save(err => {
+                console.log(err);
+                res.redirect('/author/');
+              });
+            })
+          } else {
           res.redirect('/auth/login');
+          }
         })
         .catch(err => {
           console.log(err);
@@ -130,6 +150,8 @@ exports.postLogout = (req, res, next) => {
       errors: null,
       validationErrors: [],
       isAdmin: false,
+      isFaculty: false,
+      isStudent: false,
       isAuthenticated: false
     });
   });

@@ -164,7 +164,11 @@ main {
   background-color: #582c83;
 }
 
-.navbar-custom .navbar-brand, .navbar-custom .nav-item .nav-link {
+.navbar-light .navbar-brand {
+  color: #FDC82F;
+}
+
+.navbar-custom .navbar-brand,  .navbar-custom .nav-item .nav-link {
   color: #FDC82F;
 }
 
@@ -186,7 +190,7 @@ main {
   border-color: red;
   background: rgb(255, 176, 176);
   color: red;
-}
+} 
 
 .user-message--topic--created {
   border-color: blue;

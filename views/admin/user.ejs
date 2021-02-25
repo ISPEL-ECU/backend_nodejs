@@ -46,11 +46,27 @@
                         </div>
 
                         <div class="col-sm-4">
-                            <label for="admin">Admin</label>
-                            <input type="checkbox" class="form-control" name="admin" id="admin" <% if (user.admin){%>
-                            checked <%}%>>
+                            <label for="roleIds" class="control-label">Roles</label>
+                            <select type="text" class="selectpicker" multiple size="5" style="width: 100%;"
+                                name="roleIds" id="roleIds" required>
+                                <% for (const i in roles) {
+                                    console.log("from ejs");
+                                    console.log(selectedRoles.includes(roles[i].id));
+                                    %>
+                                    <option value="<%=roles[i].id%>" <% if (selectedRoles.includes(roles[i].id)){
+                                        
+                                        %>
+                                        selected
+                                        <%}%>
+                                            >
+                                            <%=roles[i].roleName%>
+                                    </option>
+                                    <%}%>
+                            </select>
+
 
                         </div>
+
 
                         <div class="col-sm-4">
                             <label for="domainIds" class="control-label">Domains</label>
@@ -69,6 +85,9 @@
 
 
                         </div>
+
+                    </div>
+                    <div class="form-group row required">
 
                     </div>
 

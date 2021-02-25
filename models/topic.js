@@ -32,6 +32,10 @@ contentHtml: {
 contentRmd: {
     type: DataTypes.STRING,
     allowNull: true
+},
+isPrivate: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true
 }
 
 });

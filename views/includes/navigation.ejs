@@ -1,92 +1,117 @@
-  <!--****************** Sidebar ******************-->
-  <div class="main-sidebar-wrapper" id='main-sidebar'>
-    <nav class="main-sidebar" id='navbarSupportedContent'>
-      <ul class="list-unstyled components">
-        
-        <li class="nav-item">
-          <a class="nav-link" href="/author/">Home</a>
-        </li>
-  
-        <!--Expert Panel
+<!--****************** Sidebar ******************-->
+<div class="main-sidebar-wrapper" id='main-sidebar'>
+  <nav class="main-sidebar" id='navbarSupportedContent'>
+    <ul class="list-unstyled components">
+
+      <li class="nav-item">
+        <a class="nav-link" href="/author/">Home</a>
+      </li>
+
+      <!--Expert Panel
           The expert panel will be made availible to users with "expert" permissions. 
           Experts can create Topic-Areas within their attributed domains. For now, they can create 
           Domains as well. 
         -->
-        <% if (isAdmin){%>
-          <li class="nav-item active">
-            <a href="#expertSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">Expert</a>
-              <ul class="collapse list-unstyled nav-item" id="expertSubmenu">
-                <li class="nav-link">
-                  <a href="/admin/add-domain/">+ Domain</a>
-                </li>
-                <li class="nav-link">
-                  <a href="/admin/add-area/">+ Topic Area</a>
-                </li>
-              </ul>
-          </li>
-  
+      <% if (isAdmin){%>
+        <li class="nav-item active">
+          <a href="#expertSubmenu" data-toggle="collapse" aria-expanded="false"
+            class="dropdown-toggle nav-link">Expert</a>
+          <ul class="collapse list-unstyled nav-item" id="expertSubmenu">
+            <li class="nav-link">
+              <a href="/admin/add-domain/">+ Domain</a>
+            </li>
+            <li class="nav-link">
+              <a href="/admin/add-area/">+ Topic Area</a>
+            </li>
+            <li><hr></li>
+
+          </ul>
+        </li>
+
         <%}%>
 
-        <!-- Admin Menu
+          <!-- Admin Menu
         The Admin Menu is made available to users wih "admin" permissions. -->
-        <% if (isAdmin){%>
-          <li class="nav-item active">
-            <a href="#adminSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">Admin</a>
+          <% if (isAdmin){%>
+            <li class="nav-item active">
+              <a href="#adminSubmenu" data-toggle="collapse" aria-expanded="false"
+                class="dropdown-toggle nav-link">Admin</a>
               <ul class="collapse list-unstyled" id="adminSubmenu">
                 <li class="nav-link">
                   <a href="/admin/users/">Manage Users</a>
                 </li>
+                <li><hr></li>
               </ul>
-          </li>
-        <%}%>
-
-
-            <li class="nav-item">
-              <a class="nav-link" href="/author/add-topic/">Add Topic</a>
+              
             </li>
-        
-        <!--Sign in/Sign out-->
-        <% if (!isAuthenticated) { %>
-              
-          <li class="nav-item">
-            <a class="nav-link" href="/auth/login">Login</a>
-          </li>
-          <li class="nav-item">
+            <%}%>
+              <!--Sign in/Sign out-->
+              <% if (!isAuthenticated) { %>
+
+                <li class="nav-item">
+                  <a class="nav-link" href="/auth/login">Login</a>
+                </li>
+                <!-- <li class="nav-item">
             <a class="nav-link" href="/auth/signup">Sign Up</a>
-          </li>
-          <% } else { %>
+          </li> -->
+                <% } else { %>
+                  <% if (isAdmin||isFaculty) {%>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/author/add-topic/">Add Topic</a>
+                  </li>
+                  
+                  <li class="nav-link">
+                    <a href="/rct/">Create Course</a>
+                  </li>
+                  <%}%>
+                
+
+                  <li><hr></li>
+                  <li class="nav-item active">
+                    <a href="#userSubmenu" data-toggle="collapse" aria-expanded="false"
+                      class="dropdown-toggle nav-link"><%=user.firstName%></a>
+                    <ul class="collapse list-unstyled" id="userSubmenu">
+                      <li class="nav-link">
+                        <a class="nav-link" href="/user">Account</a>
+                      </li>
+                      <li class="nav-link">
+                        <a class="nav-link" href="/auth/logout">Sign Out</a>
+                      </li>
+                    </ul>
+                  </li>
+
+                  
               
-          <li class="nav-item">
-            <a class="nav-link" href="/auth/logout">Sign Out</a>
-          </li>
-          <% } %>
-        
-        <!--Bug report form -->
-        <li class = "nav-item">
+                  <% } %>
+
+                    <!--Bug report form -->
+                    <!-- <li class = "nav-item">
           <a class="nav-link" href="bug-reporting">Report A Bug</a>
-        </li>    
-      </ul> <!--Sidebar list-->
-      
-    </nav>
-  </div>
+        </li>     -->
+    </ul>
+    <!--Sidebar list-->
+
+  </nav>
+</div>
 
 
-  <!-- Top Nav Bar-->
-  <div class="main-header" id="main-header">
-    <nav class="navbar navbar-expand-lg navbar-light navbar-custom">
-      <button type="button" id="sidebarCollapse" class="navbar-btn">
-        <span></span>
-        <span></span>
-        <span></span>
+<!-- Top Nav Bar-->
+<div class="main-header" id="main-header">
+  <nav class="navbar navbar-expand-lg navbar-light navbar-custom">
+    <button type="button" id="sidebarCollapse" class="navbar-btn">
+      <span></span>
+      <span></span>
+      <span></span>
     </button>
-  
-      
-      <a class="navbar-brand" href="">ISPeL</a>
-      
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <!--------------
+
+
+    <a class="navbar-brand" href="">ISPeL</a>
+
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <!--------------
       <div class="collapse navbar-collapse navbar-right" id="navbarSupportedContent">
         <ul class="navbar-nav ml-auto ">
           <li class="nav-item">
@@ -132,22 +157,21 @@
     </nav>
     --------------->
 
-  </div>
+</div>
 
 
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+  integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 
-  <script type="text/javascript">
-    $(document).ready(function () {
-   
-        $('#sidebarCollapse').on('click', function () {
-            $('#main-sidebar, .content, #main-header').toggleClass('active');
-            $('.collapse.in').toggleClass('in');
+<script type="text/javascript">
+  $(document).ready(function () {
 
-            $('a[aria-expanded=true]').attr('aria-expanded', 'false');
-            $(this).toggleClass('active;')
-        });
+    $('#sidebarCollapse').on('click', function () {
+      $('#main-sidebar, .content, #main-header').toggleClass('active');
+      $('.collapse.in').toggleClass('in');
+
+      $('a[aria-expanded=true]').attr('aria-expanded', 'false');
+      $(this).toggleClass('active;')
     });
-  </script>
-  
-
+  });
+</script>

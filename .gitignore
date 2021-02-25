@@ -1,4 +1,5 @@
 node_modules
-rmdhtml/*
+rmdhtml
 !rmdhtml/.gitkeep
+!rmdhtml/preview.html
 .vscode/

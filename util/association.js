@@ -7,6 +7,8 @@ const Domain = require('../models/domain');
 const Area = require('../models/area');
 const User = require('../models/user');
 const UserDomain = require('../models/user-domain');
+const Role = require('../models/role');
+const UserRole = require('../models/user-role');
 
 
 //Relationships between models
@@ -33,6 +35,17 @@ Topic.belongsToMany(Keyword, {
   Domain.belongsToMany(User, {
     through: UserDomain
   });
+  Role.belongsToMany(User, {
+    through:UserRole
+  });
+  User.belongsToMany(Role, {
+    through:UserRole
+  });
+
+  // Role.create({roleName : "Admin", roleCode : "admin"});
+  // Role.create({roleName : "Faculty", roleCode : "fct"});
+  // Role.create({roleName : "Student", roleCode : "fct"});
+
 }
 
 module.exports={define};

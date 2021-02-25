@@ -1,4 +1,4 @@
-
+const isAuth = require('./middleware/is-auth');
 
 const PORT = 3000;
 
@@ -56,9 +56,12 @@ app.use(multer({
   limits: { fieldSize: 25 * 1024 * 1024 },
   storage: fileStorage,
   fileFilter: fileFilter
-}).fields([{ name: 'contentUpload', maxCount: 1 }, { name: 'rmdUpload', maxCount: 1 }]));
+}).fields([{ name: 'contentUpload', maxCount: 1 }, { name: 'rmdUpload', maxCount: 1}, { name: 'assetsUpload'}]));
 app.use(express.static(path.join(__dirname, 'public'))); //provide static access to the public folder
+app.use(express.static(path.join(__dirname, 'build')));
 app.use('/author/topic/rmdhtml', express.static(path.join(__dirname, 'rmdhtml')));
+
+
 
 app.use(session({
   secret: 'ecusessionsecret',
@@ -69,6 +72,9 @@ app.use(session({
 }));
 
 routes.define(app);
+app.get('/rct', isAuth, (req, res) => {
+  console.log('rct');
+  res.sendFile(path.resolve(__dirname, 'build', 'index.html'))});
 
 app.use(errorController.get404);
 
