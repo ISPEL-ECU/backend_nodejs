@@ -61,8 +61,6 @@ app.use(express.static(path.join(__dirname, 'public'))); //provide static access
 app.use(express.static(path.join(__dirname, 'build')));
 app.use('/author/topic/rmdhtml', express.static(path.join(__dirname, 'rmdhtml')));
 
-
-
 app.use(session({
   secret: 'ecusessionsecret',
   store: new SequelizeStore({
@@ -72,7 +70,7 @@ app.use(session({
 }));
 
 routes.define(app);
-app.get('/rct', isAuth, (req, res) => {
+app.get('*', isAuth, (req, res) => {
   console.log('rct');
   res.sendFile(path.resolve(__dirname, 'build', 'index.html'))});
 
