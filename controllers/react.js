@@ -13,6 +13,7 @@ const Course = require("../models/course");
 const { Op } = require("sequelize");
 
 exports.getTopics = (req, res, next) => {
+  
   if (req.query.areaId != "%") {
     Topic.findAll({ where: { areaId: req.query.areaId } })
       .then((topics) => {
@@ -29,6 +30,7 @@ exports.getTopics = (req, res, next) => {
 };
 
 exports.getSelectedTopics = (req, res, next) => {
+  
   Topic.findAll({ where: { id: req.query.id } })
     .then((topics) => {
       res.send(topics);
@@ -75,7 +77,7 @@ exports.getAreas = (req, res, next) => {
 };
 
 exports.getSelectedContent = (req, res, next) => {
-  console.log(req.query.id);
+  
   if (req.query.id && req.query.id !== "") {
     Topic.findOne({ where: { id: req.query.id } })
       .then((topic) => {
@@ -88,6 +90,7 @@ exports.getSelectedContent = (req, res, next) => {
 };
 
 exports.login = (req, res, next) => {
+  
   const email = req.query.email;
   const password = req.query.password;
   let loadedUser;
@@ -182,9 +185,10 @@ exports.getAliases = (req, res, next) => {
 };
 
 exports.postSaveTopic = (req, res, next) => {
-  console.log(req.data);
+  
   const domain = req.body.domain.id;
   const area = req.body.area.id;
+  
   const topicId = req.body.topicId;
   const name = req.body.name;
   const contentFile = req.files["contentUpload"][0];
@@ -211,20 +215,17 @@ exports.postSaveTopic = (req, res, next) => {
     isPrivate: private,
   }).then((newTopic) => {
     newTopic.setUser(userId);
+    return newTopic;
+  }).then((newTopic)=>{
     newTopic.addKeyword(keyword);
+    return newTopic;
+  }).then((newTopic)=>{
     newTopic.addAlias(alias);
-    // if (keyword) { //checks if keyword input field was used
-    //   Keyword.create({
-    //     value: keyword
-    //   }).then((newKeyword) => {
-    //     newTopic.addKeyword(newKeyword)
-    //   }).catch(err => console.log(err));
-    // }
-    // if (alias) { //checks if alias input field was used
-    //   Alias.create({ value: alias }).then((newAlias => {
-    //     newTopic.addAlias(newAlias)
-    //   })).catch(err => console.log(err))
-    // }
-    newTopic.setArea(area).then(() => res.send(true));
-  });
+    return newTopic;
+  }).then((newTopic)=>{
+    newTopic.setArea(area);
+  }).then(() => res.send(true))
+  .catch(err=>console.log(err));
+
+  
 };
