@@ -71,10 +71,9 @@ app.use(session({
 
 routes.define(app);
 app.get('*', isAuth, (req, res) => {
-  console.log('rct');
-  res.sendFile(path.resolve(__dirname, 'build', 'index.html'))});
+    res.sendFile(path.resolve(__dirname, 'build', 'index.html'))});
 
-app.use(errorController.get404);
+
 
 //define associations between models (db structure)
 association.define();

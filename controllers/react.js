@@ -13,7 +13,6 @@ const Course = require("../models/course");
 const { Op } = require("sequelize");
 
 exports.getTopics = (req, res, next) => {
-  
   if (req.query.areaId != "%") {
     Topic.findAll({ where: { areaId: req.query.areaId } })
       .then((topics) => {
@@ -30,7 +29,6 @@ exports.getTopics = (req, res, next) => {
 };
 
 exports.getSelectedTopics = (req, res, next) => {
-  
   Topic.findAll({ where: { id: req.query.id } })
     .then((topics) => {
       res.send(topics);
@@ -77,7 +75,6 @@ exports.getAreas = (req, res, next) => {
 };
 
 exports.getSelectedContent = (req, res, next) => {
-  
   if (req.query.id && req.query.id !== "") {
     Topic.findOne({ where: { id: req.query.id } })
       .then((topic) => {
@@ -90,7 +87,6 @@ exports.getSelectedContent = (req, res, next) => {
 };
 
 exports.login = (req, res, next) => {
-  
   const email = req.query.email;
   const password = req.query.password;
   let loadedUser;
@@ -108,18 +104,17 @@ exports.login = (req, res, next) => {
       if (!isEqual) {
         const error = new Error("Wrong credentials");
         error.statusCode = 401;
-        throw err;
+        throw error;
       }
       return isEqual;
     })
     .then(() => {
-      return loadedUser.getRoles();
+      return loadedUser.getRole();
     })
-    .then((roles) => {
+    .then((role) => {
       let authLevel = 3;
-      roles.forEach((role) => {
-        if (role.roleCode < authLevel) authLevel = role.roleCode;
-      });
+
+      if (role.roleCode < authLevel) authLevel = role.roleCode;
 
       return authLevel;
     })
@@ -185,10 +180,9 @@ exports.getAliases = (req, res, next) => {
 };
 
 exports.postSaveTopic = (req, res, next) => {
-  
   const domain = req.body.domain.id;
   const area = req.body.area.id;
-  
+
   const topicId = req.body.topicId;
   const name = req.body.name;
   const contentFile = req.files["contentUpload"][0];
@@ -213,19 +207,145 @@ exports.postSaveTopic = (req, res, next) => {
     contentHtml: contentFile.path,
     contentRmd: rmdFile ? rmdFile.path : null,
     isPrivate: private,
-  }).then((newTopic) => {
-    newTopic.setUser(userId);
-    return newTopic;
-  }).then((newTopic)=>{
-    newTopic.addKeyword(keyword);
-    return newTopic;
-  }).then((newTopic)=>{
-    newTopic.addAlias(alias);
-    return newTopic;
-  }).then((newTopic)=>{
-    newTopic.setArea(area);
-  }).then(() => res.send(true))
-  .catch(err=>console.log(err));
+  })
+    .then((newTopic) => {
+      newTopic.setUser(userId);
+      return newTopic;
+    })
+    .then((newTopic) => {
+      newTopic.addKeyword(keyword);
+      return newTopic;
+    })
+    .then((newTopic) => {
+      newTopic.addAlias(alias);
+      return newTopic;
+    })
+    .then((newTopic) => {
+      newTopic.setArea(area);
+    })
+    .then(() => res.send(true))
+    .catch((err) => console.log(err));
+};
 
-  
+exports.getUsers = (req, res, next) => {
+  User.findAll().then((users) => {
+    res.send(users);
+  });
+};
+
+exports.getRoles = (req, res, next) => {
+  Role.findAll().then((roles) => {
+    res.send(roles);
+  });
+};
+
+exports.getUser = (req, res, next) => {
+  User.findOne({where:{id:req.userId}}).then((user) => {
+    res.status(200).json({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.roleId
+    });
+    
+  });
+};
+
+exports.postUser = (req, res, next) => {
+  let updatedUser;
+  const userId = req.body.userId;
+  const firstName = req.body.firstName;
+  const lastName = req.body.lastName;
+  const email = req.body.email;
+  const password = req.body.password;
+  const role = req.body.role;
+  User.findOne({
+    where: {
+      id: userId,
+    },
+  })
+    .then((user) => {
+      updatedUser = user;
+      updatedUser.firstName = firstName;
+      updatedUser.lastName = lastName;
+      email?updatedUser.email = email:null;
+      updatedUser.roleId = role;
+    })
+    .then(() => {
+      return bcrypt.hash(password, 12);
+    })
+    .then((password) => {
+      password?updatedUser.password = password:null;
+      updatedUser.save();
+      return updatedUser;
+    })
+    .then((user) => {
+      console.log(user);
+      res.send(user);
+    })
+    .catch((err) => console.log(err));
+};
+
+exports.postAddUser = (req, res, next) => {
+  const firstName = req.body.firstName;
+  const lastName = req.body.lastName;
+  const email = req.body.email;
+  const password = req.body.password;
+  const role = req.body.role;
+  bcrypt
+    .hash(password, 12)
+    .then((hashedPassword) => {
+      return new User({
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        password: hashedPassword,
+        roleId: role
+      });
+    })
+    .then((user) => {
+      
+      user.save();
+      
+      return user;
+    })
+    .then((user) => {
+      console.log(user);
+      res.send(user);
+    })
+    .catch((err) => console.log(err));
+};
+
+
+exports.postAccount = (req, res, next) => {
+  let updatedUser;
+  const userId = req.userId;
+  const firstName = req.body.firstName;
+  const lastName = req.body.lastName;
+  const password = req.body.password;
+  const role = req.body.role;
+  User.findOne({
+    where: {
+      id: userId,
+    },
+  })
+    .then((user) => {
+      updatedUser = user;
+      updatedUser.firstName = firstName;
+      updatedUser.lastName = lastName;
+      updatedUser.roleId = role;
+    })
+    .then(() => {
+      return bcrypt.hash(password, 12);
+    })
+    .then((password) => {
+      password&&password!=''?updatedUser.password = password:null;
+      updatedUser.save();
+      return updatedUser;
+    })
+    .then((user) => {
+      console.log(user);
+      res.send(user);
+    })
+    .catch((err) => console.log(err));
 };

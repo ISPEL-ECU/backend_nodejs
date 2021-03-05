@@ -3,4 +3,4 @@ rmdhtml
 !rmdhtml/.gitkeep
 !rmdhtml/preview.html
 .vscode/
-build
+build/

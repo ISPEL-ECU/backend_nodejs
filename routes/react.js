@@ -5,7 +5,8 @@ const express = require('express');
 const reactController = require('../controllers/react');
 
 const isAuth = require('../middleware/is-react-auth');
-const isAdmin = require('../middleware/is-admin');
+const isAdmin = require('../middleware/is-react-admin');
+
 
 const router = express.Router();
 
@@ -21,5 +22,12 @@ router.get('/get-courses', isAuth, reactController.getCourses);
 router.get('/get-aliases', isAuth, reactController.getAliases);
 router.get('/get-keywords', isAuth, reactController.getKeywords);
 router.post('/save-topic', isAuth, reactController.postSaveTopic);
+router.get('/users', isAuth, isAdmin, reactController.getUsers);
+router.get('/get-roles', isAuth, isAdmin, reactController.getRoles);
+router.post('/save-user', isAuth, isAdmin, reactController.postUser);
+router.post('/create-user', isAuth, isAdmin, reactController.postAddUser);
+router.get('/get-user', isAuth, isAdmin, reactController.getUser);
+router.post('/save-account', isAuth, isAdmin, reactController.postAccount);
+//router.get('/get-user-role', isAuth, isAdmin, reactController.getUserRole);
 
 module.exports = router;

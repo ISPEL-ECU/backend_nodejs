@@ -35,12 +35,10 @@ Topic.belongsToMany(Keyword, {
   Domain.belongsToMany(User, {
     through: UserDomain
   });
-  Role.belongsToMany(User, {
-    through:UserRole
-  });
-  User.belongsToMany(Role, {
-    through:UserRole
-  });
+  Role.hasMany(User);
+  User.belongsTo(Role);
+  User.sync({ alter: true });
+  Role.sync({ alter: true });
 
   // Role.create({roleName : "Admin", roleCode : "admin"});
   // Role.create({roleName : "Faculty", roleCode : "fct"});
