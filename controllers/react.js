@@ -130,6 +130,7 @@ exports.login = (req, res, next) => {
       res.status(200).json({
         token: token,
         userId: loadedUser.id,
+        userName: loadedUser.firstName+' '+loadedUser.lastName,
         authLevel: authLevel,
       });
     })
@@ -207,6 +208,7 @@ exports.postSaveTopic = (req, res, next) => {
     contentHtml: contentFile.path,
     contentRmd: rmdFile ? rmdFile.path : null,
     isPrivate: private,
+    userId: userId
   })
     .then((newTopic) => {
       newTopic.setUser(userId);
@@ -228,7 +230,9 @@ exports.postSaveTopic = (req, res, next) => {
 };
 
 exports.getUsers = (req, res, next) => {
-  User.findAll().then((users) => {
+  User.findAll({
+    order: ['lastName', 'DESC']
+    }).then((users) => {
     res.send(users);
   });
 };
@@ -292,6 +296,7 @@ exports.postAddUser = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
   const role = req.body.role;
+  console(firstName);
   bcrypt
     .hash(password, 12)
     .then((hashedPassword) => {
@@ -336,7 +341,7 @@ exports.postAccount = (req, res, next) => {
       updatedUser.roleId = role;
     })
     .then(() => {
-      return bcrypt.hash(password, 12);
+      return password&&password!=''?bcrypt.hash(password, 12):null;
     })
     .then((password) => {
       password&&password!=''?updatedUser.password = password:null;
@@ -345,7 +350,7 @@ exports.postAccount = (req, res, next) => {
     })
     .then((user) => {
       console.log(user);
-      res.send(user);
+      res.status(200).send();
     })
     .catch((err) => console.log(err));
 };

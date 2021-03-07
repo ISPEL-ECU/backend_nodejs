@@ -26,8 +26,8 @@ router.get('/users', isAuth, isAdmin, reactController.getUsers);
 router.get('/get-roles', isAuth, isAdmin, reactController.getRoles);
 router.post('/save-user', isAuth, isAdmin, reactController.postUser);
 router.post('/create-user', isAuth, isAdmin, reactController.postAddUser);
-router.get('/get-user', isAuth, isAdmin, reactController.getUser);
-router.post('/save-account', isAuth, isAdmin, reactController.postAccount);
+router.get('/get-user', isAuth,  reactController.getUser);
+router.post('/save-account', isAuth,  reactController.postAccount);
 //router.get('/get-user-role', isAuth, isAdmin, reactController.getUserRole);
 
 module.exports = router;
