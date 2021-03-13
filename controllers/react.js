@@ -1,6 +1,8 @@
 const bcrypt = require("bcryptjs");
 const path = require("path");
 const jwt = require("jsonwebtoken");
+const axios = require("axios");
+const fetch = require("node-fetch");
 
 const Topic = require("../models/topic");
 const Domain = require("../models/domain");
@@ -10,6 +12,9 @@ const Role = require("../models/role");
 const Keyword = require("../models/keyword");
 const Alias = require("../models/alias");
 const Course = require("../models/course");
+const Question = require("../models/question");
+const Quiz = require("../models/quiz");
+
 const { Op } = require("sequelize");
 
 exports.getTopics = (req, res, next) => {
@@ -130,7 +135,7 @@ exports.login = (req, res, next) => {
       res.status(200).json({
         token: token,
         userId: loadedUser.id,
-        userName: loadedUser.firstName+' '+loadedUser.lastName,
+        userName: loadedUser.firstName + " " + loadedUser.lastName,
         authLevel: authLevel,
       });
     })
@@ -154,9 +159,10 @@ exports.postSaveCourse = (req, res, next) => {
     edges: edges,
   })
     .then(() => {
-      res.status(200);
+      res.send(true);
     })
     .catch((err) => {
+      console.log(err);
       if (!err.statusCode) {
         err.statusCode = 500;
       }
@@ -169,6 +175,13 @@ exports.getCourses = (req, res, next) => {
     res.send(courses);
   });
 };
+
+exports.getCourse = (req, res, next) => {
+  Course.findOne({where:{id:req.query.courseId}}).then((course) => {
+    res.send(course);
+  });
+};
+
 exports.getKeywords = (req, res, next) => {
   Keyword.findAll().then((keywords) => {
     res.send(keywords);
@@ -182,7 +195,7 @@ exports.getAliases = (req, res, next) => {
 
 exports.postSaveTopic = (req, res, next) => {
   const domain = req.body.domain.id;
-  const area = req.body.area.id;
+  const area = req.body.area;
 
   const topicId = req.body.topicId;
   const name = req.body.name;
@@ -208,7 +221,7 @@ exports.postSaveTopic = (req, res, next) => {
     contentHtml: contentFile.path,
     contentRmd: rmdFile ? rmdFile.path : null,
     isPrivate: private,
-    userId: userId
+    userId: userId,
   })
     .then((newTopic) => {
       newTopic.setUser(userId);
@@ -231,8 +244,8 @@ exports.postSaveTopic = (req, res, next) => {
 
 exports.getUsers = (req, res, next) => {
   User.findAll({
-    order: ['lastName', 'DESC']
-    }).then((users) => {
+    order: ["lastName", "DESC"],
+  }).then((users) => {
     res.send(users);
   });
 };
@@ -244,14 +257,13 @@ exports.getRoles = (req, res, next) => {
 };
 
 exports.getUser = (req, res, next) => {
-  User.findOne({where:{id:req.userId}}).then((user) => {
+  User.findOne({ where: { id: req.userId } }).then((user) => {
     res.status(200).json({
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.roleId
+      role: user.roleId,
     });
-    
   });
 };
 
@@ -272,14 +284,14 @@ exports.postUser = (req, res, next) => {
       updatedUser = user;
       updatedUser.firstName = firstName;
       updatedUser.lastName = lastName;
-      email?updatedUser.email = email:null;
+      email ? (updatedUser.email = email) : null;
       updatedUser.roleId = role;
     })
     .then(() => {
       return bcrypt.hash(password, 12);
     })
     .then((password) => {
-      password?updatedUser.password = password:null;
+      password ? (updatedUser.password = password) : null;
       updatedUser.save();
       return updatedUser;
     })
@@ -305,13 +317,12 @@ exports.postAddUser = (req, res, next) => {
         lastName: lastName,
         email: email,
         password: hashedPassword,
-        roleId: role
+        roleId: role,
       });
     })
     .then((user) => {
-      
       user.save();
-      
+
       return user;
     })
     .then((user) => {
@@ -320,7 +331,6 @@ exports.postAddUser = (req, res, next) => {
     })
     .catch((err) => console.log(err));
 };
-
 
 exports.postAccount = (req, res, next) => {
   let updatedUser;
@@ -341,10 +351,10 @@ exports.postAccount = (req, res, next) => {
       updatedUser.roleId = role;
     })
     .then(() => {
-      return password&&password!=''?bcrypt.hash(password, 12):null;
+      return password && password != "" ? bcrypt.hash(password, 12) : null;
     })
     .then((password) => {
-      password&&password!=''?updatedUser.password = password:null;
+      password && password != "" ? (updatedUser.password = password) : null;
       updatedUser.save();
       return updatedUser;
     })
@@ -354,3 +364,89 @@ exports.postAccount = (req, res, next) => {
     })
     .catch((err) => console.log(err));
 };
+
+const shuffleArray = (array) => {
+  var currentIndex = array.length,
+    temporaryValue,
+    randomIndex;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+};
+
+exports.getQuestions = (req, res, next) => {
+  let initialSets;
+  let shuffledResults;
+  const quizId = req.query.quizId;
+  Quiz.findOne({where:{id:quizId}}).
+  then((quiz) =>{
+  fetch("http://localhost:3157/"+quiz.url)
+    .then((response) => {
+      return response.json();
+    })
+    .then((data) => {
+      var questionInfo = JSON.parse(data);
+      initialSets = questionInfo.source;
+      let results = new Array();
+      results.push(questionInfo.answer);
+      results = results.concat(questionInfo.wrongs);
+      const answer = questionInfo.answer;
+      shuffledResults = shuffleArray(results);
+      return answer;
+    })
+    .then((answer) => {
+      Question.create({ value: answer.toString() }).then((question) => {
+        const dataSet = {
+          id: question.id,
+          initialSets: initialSets,
+          results: shuffledResults,
+        };
+        console.log(dataSet);
+        res.status(200).send(dataSet);
+      });
+    }) })
+
+    .catch((err) => console.log(err));
+};
+
+exports.getCorrectAnswer = (req, res, next) => {
+  const id = req.query.id;
+  const currentAnswer = req.query.answer;
+  Question.findOne({ where: { id: id } })
+    .then((question) => {
+      let correct = false;
+      if (question.value === currentAnswer) correct = true;
+      const correctAnswer = question.value;
+      question.destroy();
+      res.status(200).send({ correct: correct, correctAnswer: correctAnswer });
+    })
+    .catch((err) => console.log(err));
+};
+
+exports.getQuizExistForTopic = (req, res,next) =>{
+  const topicId = req.query.topicId;
+  Topic.findOne({where:{id:topicId}})
+  .then(topic=>{
+    return topic.getQuiz();
+  })
+  .then(quiz => {
+    if (quiz) {
+
+      res.status(200).send({quizId:quiz.id});
+    } else{
+      res.status(200).send(false);
+    }
+  })
+  .catch(err=>console.log(err));
+}

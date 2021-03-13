@@ -10,15 +10,16 @@ const isAdmin = require('../middleware/is-react-admin');
 
 const router = express.Router();
 
-router.get('/get-topics-search', isAuth, reactController.getTopicsSearch);
-router.get('/get-topics', isAuth, reactController.getTopics);
+router.get('/get-topics-search',  reactController.getTopicsSearch);
+router.get('/get-topics', reactController.getTopics);
 router.get('/get-selected-topics', isAuth, reactController.getSelectedTopics);
-router.get('/get-domains', isAuth, reactController.getDomains);
-router.get('/get-areas', isAuth, reactController.getAreas);
-router.get('/get-content', isAuth, reactController.getSelectedContent);
+router.get('/get-domains', reactController.getDomains);
+router.get('/get-areas', reactController.getAreas);
+router.get('/get-content', reactController.getSelectedContent);
 router.post('/login', reactController.login);
 router.post('/save-course', isAuth, reactController.postSaveCourse);
-router.get('/get-courses', isAuth, reactController.getCourses);
+router.get('/get-courses', reactController.getCourses);
+router.get('/get-course', reactController.getCourse);
 router.get('/get-aliases', isAuth, reactController.getAliases);
 router.get('/get-keywords', isAuth, reactController.getKeywords);
 router.post('/save-topic', isAuth, reactController.postSaveTopic);
@@ -28,6 +29,9 @@ router.post('/save-user', isAuth, isAdmin, reactController.postUser);
 router.post('/create-user', isAuth, isAdmin, reactController.postAddUser);
 router.get('/get-user', isAuth,  reactController.getUser);
 router.post('/save-account', isAuth,  reactController.postAccount);
+router.get('/get-questions', reactController.getQuestions);
+router.get('/check-results', reactController.getCorrectAnswer);
+router.get('/quiz-exist', reactController.getQuizExistForTopic);
 //router.get('/get-user-role', isAuth, isAdmin, reactController.getUserRole);
 
 module.exports = router;

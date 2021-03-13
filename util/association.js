@@ -8,7 +8,8 @@ const Area = require('../models/area');
 const User = require('../models/user');
 const UserDomain = require('../models/user-domain');
 const Role = require('../models/role');
-const UserRole = require('../models/user-role');
+const Quiz = require('../models/quiz');
+const TopicQuiz = require('../models/topic-quiz');
 
 
 //Relationships between models
@@ -35,10 +36,18 @@ Topic.belongsToMany(Keyword, {
   Domain.belongsToMany(User, {
     through: UserDomain
   });
+  
+  Topic.belongsTo(Quiz);
+  
   Role.hasMany(User);
   User.belongsTo(Role);
   User.sync({ alter: true });
   Role.sync({ alter: true });
+  Topic.sync({ alter: true });
+  Quiz.sync({ alter: true });
+  
+  
+  
 
   // Role.create({roleName : "Admin", roleCode : "admin"});
   // Role.create({roleName : "Faculty", roleCode : "fct"});
