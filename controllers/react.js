@@ -24,6 +24,12 @@ exports.getTopics = (req, res, next) => {
         res.send(topics);
       })
       .catch((err) => console.log(err));
+  } else if (req.query.manage) {
+    Topic.findAll({ where: { userId: req.userId } })
+      .then((topics) => {
+        res.send(topics);
+      })
+      .catch((err) => console.log(err));
   } else {
     Topic.findAll()
       .then((topics) => {
@@ -34,6 +40,7 @@ exports.getTopics = (req, res, next) => {
 };
 
 exports.getSelectedTopics = (req, res, next) => {
+  console.log("id" + req.query.id);
   Topic.findAll({ where: { id: req.query.id } })
     .then((topics) => {
       res.send(topics);
@@ -56,6 +63,7 @@ exports.getTopicsSearch = (req, res, next) => {
 };
 
 exports.getSelectedTopics = (req, res, next) => {
+  console.log("id" + req.query.id);
   Topic.findAll({ where: { id: req.query.id } })
     .then((topics) => {
       res.send(topics);
@@ -155,8 +163,8 @@ exports.postSaveCourse = (req, res, next) => {
   Course.create({
     name: courseName,
     topics: topics,
-    nodes: nodes,
-    edges: edges,
+    nodes: null,
+    edges: null,
   })
     .then(() => {
       res.send(true);
@@ -177,9 +185,12 @@ exports.getCourses = (req, res, next) => {
 };
 
 exports.getCourse = (req, res, next) => {
-  Course.findOne({where:{id:req.query.courseId}}).then((course) => {
-    res.send(course);
-  });
+  console.log("id" + req.query.id);
+  Course.findOne({ where: { id: req.query.courseId } })
+    .then((course) => {
+      res.send(course);
+    })
+    .catch((err) => console.log(err));
 };
 
 exports.getKeywords = (req, res, next) => {
@@ -194,12 +205,12 @@ exports.getAliases = (req, res, next) => {
 };
 
 exports.postSaveTopic = (req, res, next) => {
-  const domain = req.body.domain.id;
+  const domain = req.body.domain ? req.body.domain.id : null;
+
   const area = req.body.area;
 
   const topicId = req.body.topicId;
   const name = req.body.name;
-  const contentFile = req.files["contentUpload"][0];
   const rmdFile =
     typeof req.files["rmdUpload"] !== "undefined"
       ? req.files["rmdUpload"][0]
@@ -210,36 +221,66 @@ exports.postSaveTopic = (req, res, next) => {
   const paragraph = req.body.teaser;
   const private = req.body.private;
   const userId = req.userId;
-
-  Topic.create({
-    domain: domain,
-    areId: area,
-    difficulty: difficulty,
-    topicId: topicId,
-    name: name,
-    teaser: paragraph,
-    contentHtml: contentFile.path,
-    contentRmd: rmdFile ? rmdFile.path : null,
-    isPrivate: private,
-    userId: userId,
-  })
-    .then((newTopic) => {
-      newTopic.setUser(userId);
-      return newTopic;
+  const changedId = req.body.changedId;
+  console.log("changeId" + changedId);
+  if (changedId) {
+    const contentFile =
+      typeof req.body.contentUpload === "string"
+        ? req.body.contentUpload
+        : req.files["contentUpload"][0].path;
+    console.log(name);
+    console.log(paragraph);
+    console.log(contentFile);
+    Topic.findOne({ where: { id: changedId } })
+      .then((topic) => {
+        console.log("found");
+        topic
+          .update({
+            name: name,
+            teaser: paragraph,
+            contentHtml: contentFile,
+          })
+          .then(() => {
+            console.log("after update");
+            res.send(true);
+          });
+      })
+      .catch((err) => console.log(err));
+  } else {
+    const contentFile = req.files["contentUpload"][0];
+    Topic.create({
+      domain: domain,
+      areId: area,
+      difficulty: difficulty,
+      topicId: topicId,
+      name: name,
+      teaser: paragraph,
+      contentHtml: contentFile.path,
+      contentRmd: rmdFile ? rmdFile.path : null,
+      isPrivate: private,
+      userId: userId,
     })
-    .then((newTopic) => {
-      newTopic.addKeyword(keyword);
-      return newTopic;
-    })
-    .then((newTopic) => {
-      newTopic.addAlias(alias);
-      return newTopic;
-    })
-    .then((newTopic) => {
-      newTopic.setArea(area);
-    })
-    .then(() => res.send(true))
-    .catch((err) => console.log(err));
+      .then((newTopic) => {
+        newTopic.setUser(userId);
+        return newTopic;
+      })
+      .then((newTopic) => {
+        newTopic.addKeyword(keyword);
+        return newTopic;
+      })
+      .then((newTopic) => {
+        newTopic.addAlias(alias);
+        return newTopic;
+      })
+      .then((newTopic) => {
+        newTopic.setArea(area);
+      })
+      .then(() => res.send(true))
+      .catch((err) => {
+        console.log(err);
+        res.status(500).send(err);
+      });
+  }
 };
 
 exports.getUsers = (req, res, next) => {
@@ -389,33 +430,35 @@ exports.getQuestions = (req, res, next) => {
   let initialSets;
   let shuffledResults;
   const quizId = req.query.quizId;
-  Quiz.findOne({where:{id:quizId}}).
-  then((quiz) =>{
-  fetch("http://localhost:3157/"+quiz.url)
-    .then((response) => {
-      return response.json();
+  Quiz.findOne({ where: { id: quizId } })
+    .then((quiz) => {
+      fetch("http://localhost:3157/" + quiz.url)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          var questionInfo = JSON.parse(data);
+          initialSets = questionInfo.source;
+          let results = new Array();
+          results.push(questionInfo.answer);
+          results = results.concat(questionInfo.wrongs);
+          const answer = questionInfo.answer;
+          shuffledResults = shuffleArray(results);
+          return answer;
+        })
+        .then((answer) => {
+          Question.create({ value: answer.toString() }).then((question) => {
+            const dataSet = {
+              id: question.id,
+              initialSets: initialSets,
+              results: shuffledResults,
+              title: quiz.question,
+            };
+            console.log(dataSet);
+            res.status(200).send(dataSet);
+          });
+        });
     })
-    .then((data) => {
-      var questionInfo = JSON.parse(data);
-      initialSets = questionInfo.source;
-      let results = new Array();
-      results.push(questionInfo.answer);
-      results = results.concat(questionInfo.wrongs);
-      const answer = questionInfo.answer;
-      shuffledResults = shuffleArray(results);
-      return answer;
-    })
-    .then((answer) => {
-      Question.create({ value: answer.toString() }).then((question) => {
-        const dataSet = {
-          id: question.id,
-          initialSets: initialSets,
-          results: shuffledResults,
-        };
-        console.log(dataSet);
-        res.status(200).send(dataSet);
-      });
-    }) })
 
     .catch((err) => console.log(err));
 };
@@ -434,19 +477,49 @@ exports.getCorrectAnswer = (req, res, next) => {
     .catch((err) => console.log(err));
 };
 
-exports.getQuizExistForTopic = (req, res,next) =>{
+exports.getQuizExistForTopic = (req, res, next) => {
   const topicId = req.query.topicId;
-  Topic.findOne({where:{id:topicId}})
-  .then(topic=>{
-    return topic.getQuiz();
-  })
-  .then(quiz => {
-    if (quiz) {
+  if (topicId) {
+    Topic.findOne({ where: { id: topicId } })
+      .then((topic) => {
+        return topic.getQuiz();
+      })
+      .then((quiz) => {
+        if (quiz) {
+          res.status(200).send({ quizId: quiz.id });
+        } else {
+          res.status(200).send(false);
+        }
+      })
+      .catch((err) => console.log(err));
+  }
+};
 
-      res.status(200).send({quizId:quiz.id});
-    } else{
-      res.status(200).send(false);
-    }
-  })
-  .catch(err=>console.log(err));
-}
+exports.getTopic = (req, res, next) => {
+  const id = req.query.id;
+  Topic.findOne({ where: { id: id } })
+    .then((topic) => {
+      console.log(topic);
+      res.send(topic);
+    })
+    .catch((err) => console.log(err));
+};
+
+async function getTopics(metaTipics) {}
+
+exports.getTopicsByComplexId = async (req, res, next) => {
+  const metaTopics = req.query.ids;
+  const result = [];
+  for (let i = 0; i < metaTopics.length; i++) {
+    let resultTopic = JSON.parse(metaTopics[i]);
+    await Topic.findAll({ where: { topicId: resultTopic.topics } }).then(async (processedTopics) => {
+        await Area.findOne({where:{id:processedTopics[0].areaId}}).then((area) =>{
+        result.push({ name: resultTopic.name, topics: processedTopics, areaName: area.name });
+        }
+        )
+      }
+    );
+  }
+
+  res.send(result);
+};
