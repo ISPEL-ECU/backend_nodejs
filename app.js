@@ -1,4 +1,4 @@
-const isAuth = require('./middleware/is-auth');
+const isAuth = require('./middleware/is-react-auth');
 
 const PORT = 3000;
 
@@ -52,6 +52,13 @@ app.set('views', 'views');
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+app.use(
+  express.urlencoded({
+    extended: true
+  })
+)
+
+app.use(express.json())
 app.use(multer({
   limits: { fieldSize: 25 * 1024 * 1024 },
   storage: fileStorage,
@@ -70,8 +77,9 @@ app.use(session({
 }));
 
 routes.define(app);
-app.get('*', isAuth, (req, res) => {
+app.get('*',  (req, res) => {
     res.sendFile(path.resolve(__dirname, 'build', 'index.html'))});
+
 
 
 

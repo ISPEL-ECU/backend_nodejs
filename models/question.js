@@ -3,7 +3,7 @@ const DataTypes = require('sequelize');
 
 const sequelize = require('../util/database');
 
-const Question = sequelize.define('keyword', {
+const Question = sequelize.define('questions', {
   id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -12,8 +12,7 @@ const Question = sequelize.define('keyword', {
   },
    value: {
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
+      allowNull: false
  
 }});
 

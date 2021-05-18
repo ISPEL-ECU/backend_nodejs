@@ -3,6 +3,7 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const fetch = require("node-fetch");
+const math = require('mathjs');
 
 const Topic = require("../models/topic");
 const Domain = require("../models/domain");
@@ -12,8 +13,10 @@ const Role = require("../models/role");
 const Keyword = require("../models/keyword");
 const Alias = require("../models/alias");
 const Course = require("../models/course");
+const ExCourse = require("../models/excourse");
 const Question = require("../models/question");
 const Quiz = require("../models/quiz");
+
 
 const { Op } = require("sequelize");
 
@@ -178,8 +181,37 @@ exports.postSaveCourse = (req, res, next) => {
     });
 };
 
+exports.postSaveExCourse = (req, res, next) => {
+  const courseName = req.body.courseName;
+  const topics = req.body.topics;
+  const nodes = req.body.nodes;
+  const edges = req.body.edges;
+  ExCourse.create({
+    name: courseName,
+    topics: topics,
+    nodes: nodes,
+    edges: edges,
+  })
+    .then(() => {
+      res.send(true);
+    })
+    .catch((err) => {
+      console.log(err);
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
+};
+
 exports.getCourses = (req, res, next) => {
   Course.findAll().then((courses) => {
+    res.send(courses);
+  });
+};
+
+exports.getExCourses = (req, res, next) => {
+  ExCourse.findAll().then((courses) => {
     res.send(courses);
   });
 };
@@ -187,6 +219,15 @@ exports.getCourses = (req, res, next) => {
 exports.getCourse = (req, res, next) => {
   console.log("id" + req.query.id);
   Course.findOne({ where: { id: req.query.courseId } })
+    .then((course) => {
+      res.send(course);
+    })
+    .catch((err) => console.log(err));
+};
+
+exports.getExCourse = (req, res, next) => {
+  console.log("id" + req.query.id);
+  ExCourse.findOne({ where: { id: req.query.courseId } })
     .then((course) => {
       res.send(course);
     })
@@ -349,7 +390,7 @@ exports.postAddUser = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
   const role = req.body.role;
-  console(firstName);
+  console.log(firstName);
   bcrypt
     .hash(password, 12)
     .then((hashedPassword) => {
@@ -423,7 +464,7 @@ const shuffleArray = (array) => {
     array[randomIndex] = temporaryValue;
   }
 
-  return array;
+  return array; 
 };
 
 exports.getQuestions = (req, res, next) => {
@@ -432,32 +473,34 @@ exports.getQuestions = (req, res, next) => {
   const quizId = req.query.quizId;
   Quiz.findOne({ where: { id: quizId } })
     .then((quiz) => {
-      fetch("http://localhost:3157/" + quiz.url)
+      fetch("http://localhost:3157/" + quiz.url, { method: 'POST'})
         .then((response) => {
-          return response.json();
+          return response.json(); 
         })
         .then((data) => {
-          var questionInfo = JSON.parse(data);
-          initialSets = questionInfo.source;
+          var questionInfo = (data);
+          console.log(questionInfo);
+          initialSets = questionInfo.question.content;
           let results = new Array();
-          results.push(questionInfo.answer);
-          results = results.concat(questionInfo.wrongs);
-          const answer = questionInfo.answer;
+          results.push(questionInfo.question.correct);
+          results = results.concat(questionInfo.question.distractors);
+          const answer = questionInfo.question.correct;
           shuffledResults = shuffleArray(results);
           return answer;
-        })
+        })  
         .then((answer) => {
           Question.create({ value: answer.toString() }).then((question) => {
             const dataSet = {
               id: question.id,
+              // title: initialSets.shift().toString(),
               initialSets: initialSets,
               results: shuffledResults,
-              title: quiz.question,
+                
             };
             console.log(dataSet);
             res.status(200).send(dataSet);
           });
-        });
+        }) .catch((err) => console.log(err));
     })
 
     .catch((err) => console.log(err));
@@ -511,15 +554,36 @@ exports.getTopicsByComplexId = async (req, res, next) => {
   const metaTopics = req.query.ids;
   const result = [];
   for (let i = 0; i < metaTopics.length; i++) {
-    let resultTopic = JSON.parse(metaTopics[i]);
-    await Topic.findAll({ where: { topicId: resultTopic.topics } }).then(async (processedTopics) => {
-        await Area.findOne({where:{id:processedTopics[0].areaId}}).then((area) =>{
-        result.push({ name: resultTopic.name, topics: processedTopics, areaName: area.name });
-        }
-        )
-      }
-    );
+    let resultTopic = metaTopics[i];
+    if (resultTopic.startsWith('#')){
+      result.push({type: "header", value:resultTopic});
+    } else {
+      await Topic.findOne({where:{topicId: resultTopic}})
+      .then((topic)=>{
+        result.push({type: "topic", value:topic});
+      })
+      .catch(err => console.log(err));
+    }
   }
+
+
+  // for (let i = 0; i < metaTopics.length; i++) {
+  //   let resultTopic = JSON.parse(metaTopics[i]);
+  //   await Topic.findAll({ where: { topicId: resultTopic.topics } }).then(async (processedTopics) => {
+  //       await Area.findOne({where:{id:processedTopics[0].areaId}}).then((area) =>{
+  //       result.push({ name: resultTopic.name, topics: processedTopics, areaName: area.name });
+  //       }
+  //       )
+  //     }
+  //   );
+  // }
 
   res.send(result);
 };
+
+
+exports.getFormulaResult = (req, res, next) => {
+  const equation = req.query.equation;
+  result = math.evaluate(equation);
+  res.send({"eqresult":result});
+}

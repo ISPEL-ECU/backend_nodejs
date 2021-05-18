@@ -13,6 +13,10 @@ const Quiz = sequelize.define("quiz", {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  question:{
+    type : DataTypes.STRING,
+    allowNull: false,
+  },
   url: {
     type: DataTypes.STRING,
     allowNull: false,

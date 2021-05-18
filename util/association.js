@@ -9,7 +9,8 @@ const User = require('../models/user');
 const UserDomain = require('../models/user-domain');
 const Role = require('../models/role');
 const Quiz = require('../models/quiz');
-const TopicQuiz = require('../models/topic-quiz');
+const Question = require('../models/question');
+const Course = require('../models/course');
 
 
 //Relationships between models
@@ -41,10 +42,12 @@ Topic.belongsToMany(Keyword, {
   
   Role.hasMany(User);
   User.belongsTo(Role);
-  User.sync({ alter: true });
-  Role.sync({ alter: true });
-  Topic.sync({ alter: true });
-  Quiz.sync({ alter: true });
+ // Course.sync({alter: true});
+ // Question.sync({alter: true});
+  // User.sync({ alter: true });
+  // Role.sync({ alter: true });
+  // Topic.sync({ alter: true });
+  // Quiz.sync({ alter: true });
   
   
   

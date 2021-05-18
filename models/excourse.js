@@ -2,7 +2,7 @@ const DataTypes = require('sequelize');
 
 const sequelize = require('../util/database');
 
-const Course = sequelize.define('course', {
+const Course = sequelize.define('excourse', {
   id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -19,7 +19,7 @@ topics: {
     type: DataTypes.JSON,
       allowNull: false,
       unique: false
-},
+}, 
 nodes: {
     type: DataTypes.JSON,
       allowNull: true,
