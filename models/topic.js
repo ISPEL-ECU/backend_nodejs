@@ -13,11 +13,12 @@ const Topic = sequelize.define('topic', {
   },
   topicId: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      unique: true
   },
   name: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       unique: true
   },
   
@@ -35,6 +36,10 @@ contentRmd: {
     allowNull: true
 },
 isPrivate: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true
+},
+markedForDelition: {
     type: DataTypes.BOOLEAN,
     allowNull: true
 }
