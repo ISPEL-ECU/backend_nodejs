@@ -19,6 +19,7 @@ const Quiz = require("../models/quiz");
 
 
 const { Op } = require("sequelize");
+const { deleteFile } = require("../util/file");
 
 exports.getTopics = (req, res, next) => {
   if (req.query.areaId != "%") {
@@ -28,11 +29,19 @@ exports.getTopics = (req, res, next) => {
       })
       .catch((err) => console.log(err));
   } else if (req.query.manage) {
-    Topic.findAll({ where: { userId: req.userId } })
-      .then((topics) => {
+    if (req.authLevel!='1'){
+    Topic.findAll({ where: { userId: req.userId } }) 
+      .then((topics) => { 
         res.send(topics);
       })
       .catch((err) => console.log(err));
+    } else {
+      Topic.findAll() 
+      .then((topics) => { 
+        res.send(topics);
+      })
+      .catch((err) => console.log(err));
+    }
   } else {
     Topic.findAll()
       .then((topics) => {
@@ -41,6 +50,25 @@ exports.getTopics = (req, res, next) => {
       .catch((err) => console.log(err));
   }
 };
+
+exports.postDeleteTopic = (req, res, next) =>{
+  const topicId = req.query.id;
+  Topic.findOne({where:{id: topicId}})
+  .then((topic)=>{
+    deleteFile(topic.contentHtml);
+    topic.destroy().then(()=>{
+      res.status(200).send();
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send(err);
+    });  
+  })
+  .catch((err) => {
+    console.log(err);
+    res.status(500).send(err);
+  });
+}
 
 exports.getSelectedTopics = (req, res, next) => {
   console.log("id" + req.query.id);
@@ -139,6 +167,7 @@ exports.login = (req, res, next) => {
         {
           firstName: loadedUser.firstName,
           userId: loadedUser.id,
+          roleCode: authLevel,
         },
         "mysecretforecu",
         { expiresIn: "1h" }
@@ -275,6 +304,9 @@ exports.postSaveTopic = (req, res, next) => {
     Topic.findOne({ where: { id: changedId } })
       .then((topic) => {
         console.log("found");
+        if (contentFile!==topic.contentHtml){
+          deleteFile(topic.contentHtml)
+        }
         topic
           .update({
             name: name,

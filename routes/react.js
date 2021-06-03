@@ -39,6 +39,7 @@ router.get('/get-topic', isAuth, reactController.getTopic);
 router.get('/get-topic-complex',  reactController.getTopicsByComplexId);
 router.get('/get-topics-manage', isAuth, reactController.getTopics);
 router.get('/get-formula', reactController.getFormulaResult);
+router.post('/delete-topic', isAuth, isAdmin, reactController.postDeleteTopic);
 //router.get('/get-user-role', isAuth, isAdmin, reactController.getUserRole);
 
 module.exports = router; 
