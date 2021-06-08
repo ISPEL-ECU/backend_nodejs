@@ -358,7 +358,7 @@ exports.postSaveTopic = (req, res, next) => {
 
 exports.getUsers = (req, res, next) => {
   User.findAll({
-    order: ["lastName", "DESC"],
+    order: ["lastName"],
   }).then((users) => {
     res.send(users);
   });
@@ -592,11 +592,11 @@ exports.getTopicsByComplexId = async (req, res, next) => {
     } else {
       await Topic.findOne({where:{topicId: resultTopic}})
       .then((topic)=>{
-        result.push({type: "topic", value:topic});
+        result.push({type: "topic", value:topic, id: resultTopic});
       })
       .catch(err => console.log(err));
     }
-  }
+  } 
 
 
   // for (let i = 0; i < metaTopics.length; i++) {
