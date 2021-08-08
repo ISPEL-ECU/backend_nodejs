@@ -118,6 +118,16 @@ exports.getAreas = (req, res, next) => {
     .catch((err) => console.log(err));
 };
 
+exports.getDomainById = (req,res,next) =>{
+  Area.findOne({where: {id: req.query.areaId}})
+  .then((area)=>{
+    const domainId = area.domainId.toString();
+    res.send(domainId);
+  })
+  .catch(err=>
+    console.log(err));
+}
+
 exports.getSelectedContent = (req, res, next) => {
   if (req.query.id && req.query.id !== "") {
     Topic.findOne({ where: { id: req.query.id } })
@@ -503,14 +513,21 @@ exports.getQuestions = (req, res, next) => {
   let initialSets;
   let shuffledResults;
   const quizId = req.query.quizId;
+  const difficulty = req.query.difficulty ? req.query.difficulty : "1";
   Quiz.findOne({ where: { id: quizId } })
     .then((quiz) => {
-      fetch("http://localhost:3157/" + quiz.url, { method: 'POST'})
+      fetch(
+        "http://localhost:3157/" + quiz.url + "?qDifficulty=" + difficulty,
+        { method: "POST" }
+      )
         .then((response) => {
           return response.json(); 
         })
         .then((data) => {
-          var questionInfo = (data);
+          if (data.format) {
+            questionType = data.format[0];
+          }
+          var questionInfo = data;
           console.log(questionInfo);
           initialSets = questionInfo.question.content;
           let results = new Array();
@@ -521,18 +538,23 @@ exports.getQuestions = (req, res, next) => {
           return answer;
         })  
         .then((answer) => {
-          Question.create({ value: answer.toString() }).then((question) => {
+          const answerString =
+            answer.toString().length > 256
+              ? answer.toString().slice(0, 256)
+              : answer.toString();
+          Question.create({ value: answerString }).then((question) => {
             const dataSet = {
               id: question.id,
               // title: initialSets.shift().toString(),
               initialSets: initialSets,
               results: shuffledResults,
-                
+              questionFormat: questionType,
             };
-            console.log(dataSet);
+
             res.status(200).send(dataSet);
           });
-        }) .catch((err) => console.log(err));
+        })
+        .catch((err) => console.log(err));
     })
 
     .catch((err) => console.log(err));
