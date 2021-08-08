@@ -11,7 +11,7 @@ const Question = sequelize.define('questions', {
       primaryKey: true
   },
    value: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false
  
 }});

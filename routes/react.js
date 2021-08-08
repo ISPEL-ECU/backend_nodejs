@@ -35,11 +35,12 @@ router.post('/save-account', isAuth,  reactController.postAccount);
 router.get('/get-questions', reactController.getQuestions);
 router.get('/check-results', reactController.getCorrectAnswer);
 router.get('/quiz-exist', reactController.getQuizExistForTopic);
-router.get('/get-topic', isAuth, reactController.getTopic);
+router.get('/get-topic', reactController.getTopic);
 router.get('/get-topic-complex',  reactController.getTopicsByComplexId);
 router.get('/get-topics-manage', isAuth, reactController.getTopics);
 router.get('/get-formula', reactController.getFormulaResult);
 router.post('/delete-topic', isAuth, isAdmin, reactController.postDeleteTopic);
+router.get('/get-domainId', reactController.getDomainById); 
 //router.get('/get-user-role', isAuth, isAdmin, reactController.getUserRole);
 
 module.exports = router; 

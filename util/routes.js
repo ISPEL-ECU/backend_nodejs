@@ -1,7 +1,4 @@
-const authorRoutes = require('../routes/author');
-const userRoutes = require('../routes/user');
-const adminRoutes = require('../routes/admin');
-const authenticationRoutes = require('../routes/auth');
+
 const reactRoutes = require('../routes/react');
 const path = require('path');
 
