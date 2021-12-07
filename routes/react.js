@@ -41,6 +41,12 @@ router.get('/get-topics-manage', isAuth, reactController.getTopics);
 router.get('/get-formula', reactController.getFormulaResult);
 router.post('/delete-topic', isAuth, isAdmin, reactController.postDeleteTopic);
 router.get('/get-domainId', reactController.getDomainById); 
+router.post('/save-questionbank', isAuth, reactController.postSaveQuestionBank);
+router.post('/save-bankquestions', reactController.postSaveBankQuestions);
+router.get('/get-questionbanks', isAuth, reactController.getQuestionBanks);
+router.get('/get-questionslist', isAuth, reactController.getQuestionList);
+router.post('/save-qbq', reactController.postSaveQuestionsToQuestionBank);
+//router.get('/get-questionbanks', isAuth, reactController.getQuestionBanks);
 //router.get('/get-user-role', isAuth, isAdmin, reactController.getUserRole);
 
 module.exports = router; 

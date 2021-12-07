@@ -16,10 +16,13 @@ const Course = require("../models/course");
 const ExCourse = require("../models/excourse");
 const Question = require("../models/question");
 const Quiz = require("../models/quiz");
+const QuestionBank = require("../models/questionbank");
+const QuestionFromBank = require("../models/bankquestions");
 
 
 const { Op } = require("sequelize");
 const { deleteFile } = require("../util/file");
+const questionbank = require("../models/questionbank");
 
 exports.getTopics = (req, res, next) => {
   if (req.query.areaId != "%") {
@@ -131,7 +134,7 @@ exports.getDomainById = (req,res,next) =>{
 exports.getSelectedContent = (req, res, next) => {
   if (req.query.id && req.query.id !== "") {
     Topic.findOne({ where: { id: req.query.id } })
-      .then((topic) => {
+      .then((topic) => { 
         res.send(topic.contentHtml);
       })
       .catch((err) => console.log(err));
@@ -202,15 +205,78 @@ exports.postSaveCourse = (req, res, next) => {
   const topics = req.query.topics;
   const nodes = req.query.nodes;
   const edges = req.query.edges;
+  const topicsList = JSON.parse(topics);
+  const filterFunction = (name) =>{
+    return !name.startsWith('#')&&name!=='';
+  }
+  const filteredList = topicsList.filter(filterFunction);
   Course.create({
     name: courseName,
-    topics: topics,
+    topics_list: topics,
     nodes: null,
     edges: null,
   })
-    .then(() => {
-      res.send(true);
+    .then((newCourse) => {
+      Topic.findAll({
+        where: {
+          topicId: filteredList
+        }
+      }).then((foundTopics) =>{
+      newCourse.setTopics(foundTopics)
+      .then(()=>{
+        res.send(true);
+      })
+      })
+
+     // res.send(true);
     })
+    
+    .catch((err) => {
+      console.log(err);
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
+};
+
+exports.postSaveBankQuestions = (req, res, next) => {
+  const QuestionText = req.body.QuestionText;
+  const QuestionName = req.body.QuestionName;
+  const correct = req.body.correct;
+  const distractor1 = req.body.distractor1;
+  const distractor2 = req.body.distractor2;
+  const distractor3 = req.body.distractor3;
+  QuestionFromBank.create({
+    text: QuestionText,
+    question_name: QuestionName,
+    correct: correct,
+    distractor1: distractor1,
+    distractor2: distractor2,
+    distractor3: distractor3
+  })
+  .then(() => {
+    res.send(true);
+  })
+    .catch((err) => {
+      console.log(err);
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
+};
+
+exports.postSaveQuestionBank = (req, res, next) => {
+  const QuestionBankName = req.body.questionBankName;
+  const teaser = req.body.teaser;
+  QuestionBank.create({
+    name: QuestionBankName,
+    teaser: teaser
+  })
+  .then(() => {
+    res.send(true);
+  })
     .catch((err) => {
       console.log(err);
       if (!err.statusCode) {
@@ -242,6 +308,20 @@ exports.postSaveExCourse = (req, res, next) => {
       next(err);
     });
 };
+
+exports.getQuestionBanks = (req, res, next) => {
+  QuestionBank.findAll().then((questionbanks) => {
+    res.send(questionbanks);
+  });
+};
+
+exports.getQuestionList = (req, res, next) => {
+  QuestionFromBank.findAll().then((questionbanks) => {
+    res.send(questionbanks);
+  });
+};
+
+
 
 exports.getCourses = (req, res, next) => {
   Course.findAll().then((courses) => {
@@ -509,25 +589,62 @@ const shuffleArray = (array) => {
   return array; 
 };
 
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
 exports.getQuestions = (req, res, next) => {
   let initialSets;
   let shuffledResults;
   const quizId = req.query.quizId;
-  const difficulty = req.query.difficulty ? req.query.difficulty : "1";
+  const difficulty = req.query.difficulty;
   Quiz.findOne({ where: { id: quizId } })
     .then((quiz) => {
-      fetch(
-        "http://localhost:3157/" + quiz.url + "?qDifficulty=" + difficulty,
-        { method: "POST" }
-      )
+      if (quiz.question=="questionBank"){
+        QuestionBank.findOne({where: {id: quiz.url}})
+        .then(bank =>{
+          const questionsList = bank.getBankquestions();
+          return (questionsList)
+        })
+        .then(questionsList =>{
+          const currentQuestion = questionsList[getRandomInt(questionsList.length)];
+          if (currentQuestion) {
+            const answerString = currentQuestion.correct;
+            Question.create({ value: answerString }).then((question) => {
+              let results = new Array();
+              results.push(currentQuestion.correct);
+              results.push(currentQuestion.distractor1);
+              results.push(currentQuestion.distractor2);
+              results.push(currentQuestion.distractor3);
+              const shuffledResults = shuffleArray(results);
+              const dataSet = {
+                id: question.id,
+                // title: initialSets.shift().toString(),
+                initialSets: [currentQuestion.text],
+                results: shuffledResults,
+                  
+              };
+              console.log(dataSet);
+              res.status(200).send(dataSet)
+            })
+            .catch((err) => console.log(err));
+          }  
+        })
+
+
+
+       
+          
+      } else {
+      fetch("http://localhost:4221/" + quiz.url, { method: 'POST', body: "difficulty: ["+difficulty+"]"})
         .then((response) => {
           return response.json(); 
         })
         .then((data) => {
-          if (data.format) {
-            questionType = data.format[0];
+          if (data.format[0]==='2'){
+            res.status(200).send({'format':2, 'graph':JSON.parse(data.question)});
           }
-          var questionInfo = data;
+          var questionInfo = (data);
           console.log(questionInfo);
           initialSets = questionInfo.question.content;
           let results = new Array();
@@ -538,24 +655,20 @@ exports.getQuestions = (req, res, next) => {
           return answer;
         })  
         .then((answer) => {
-          const answerString =
-            answer.toString().length > 256
-              ? answer.toString().slice(0, 256)
-              : answer.toString();
+          const answerString = answer.length>256?nswer.toString().slice(0,256):answer.toString();
           Question.create({ value: answerString }).then((question) => {
             const dataSet = {
               id: question.id,
               // title: initialSets.shift().toString(),
               initialSets: initialSets,
               results: shuffledResults,
-              questionFormat: questionType,
+                
             };
-
+            console.log(dataSet);
             res.status(200).send(dataSet);
           });
-        })
-        .catch((err) => console.log(err));
-    })
+        }) .catch((err) => console.log(err));
+    }})
 
     .catch((err) => console.log(err));
 };
@@ -641,3 +754,47 @@ exports.getFormulaResult = (req, res, next) => {
   result = math.evaluate(equation);
   res.send({"eqresult":result});
 }
+
+
+exports.postSaveQuestionsToQuestionBank = (req, res, next) => {
+  const questionBank = req.body.questionBank;
+  const questions = req.body.questions.split(',');
+  
+  QuestionFromBank.findAll({where:{id:questions}}).then((qns)=>{
+
+    QuestionBank.findOne({where:{id:questionBank}}).then((qb)=>{
+      qb.addBankquestions(qns).then(()=>{
+      res.status(200).send(true);
+    })
+    .catch((err) => console.log(err))
+  })
+  .catch((err) => console.log(err))
+})
+    .catch((err) => console.log(err));
+
+  // const email = req.body.email;
+  // const password = req.body.password;
+  // const role = req.body.role;
+  // console.log(firstName);
+  // bcrypt
+  //   .hash(password, 12)
+  //   .then((hashedPassword) => {
+  //     return new User({
+  //       firstName: firstName,
+  //       lastName: lastName,
+  //       email: email,
+  //       password: hashedPassword,
+  //       roleId: role,
+  //     });
+  //   })
+  //   .then((user) => {
+  //     user.save();
+
+  //     return user;
+  //   })
+  //   .then((user) => {
+  //     console.log(user);
+  //     res.send(user);
+  //   })
+  //   .catch((err) => console.log(err));
+};
