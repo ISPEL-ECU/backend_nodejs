@@ -57,9 +57,17 @@ Topic.belongsToMany(Keyword, {
   QuestionFromBank.belongsToMany(QuestionBank, {
     through: "QBQ"
   });
+
+  Course.belongsToMany(Topic, {
+    through: "course-topic"
+  });
+  Topic.belongsToMany(Course,{
+    through: "course-topic"
+  });
+
   QuestionBank.sync({alter: true});
   QuestionFromBank.sync({alter: true});
- // Course.sync({alter: true});
+ //Course.sync({alter: true});
  // Question.sync({alter: true});
   // User.sync({ alter: true });
   // Role.sync({ alter: true });

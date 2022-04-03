@@ -15,7 +15,7 @@ const Course = sequelize.define('course', {
       unique: true
  
 },
-topics: {
+topics_list: {
     type: DataTypes.JSON,
       allowNull: false,
       unique: false
