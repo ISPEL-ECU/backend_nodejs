@@ -51,6 +51,12 @@ Topic.belongsToMany(Keyword, {
   
   Role.hasMany(User);
   User.belongsTo(Role);
+  User.belongsToMany(Topic, {
+    through: "UserTopics"
+  });
+  Topic.belongsToMany(User, {
+    through: "UserTopics"
+  });
   QuestionBank.belongsToMany(QuestionFromBank, {
     through: "QBQ"
   });
