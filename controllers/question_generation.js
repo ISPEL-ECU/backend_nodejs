@@ -46,19 +46,19 @@ exports.generate_mean_question = () => {
     a: 2,
   };
   let results = {};
-  const correct_answer = formula.evaluate(scope);
+  const correct_answer = formula.evaluate(scope).toFixed(2);
   results["correctAnswer"] = correct_answer;
   const correct_a = 2;
   scope.a = getRandomInteger(1, 10, [correct_a]);
-  const distractor1 = formula.evaluate(scope);
+  const distractor1 = formula.evaluate(scope).toFixed(2);
   const distr1_a = scope.a;
   results["distractor1"] = distractor1;
   scope.a = getRandomInteger(1, 10, [distr1_a, 2]);
-  const distractor2 = formula.evaluate(scope);
+  const distractor2 = formula.evaluate(scope).toFixed(2);
   const distr2_a = scope.a;
   results["distractor2"] = distractor2;
   scope.a = getRandomInteger(1, 10, [distr1_a, distr2_a, 2]);
-  const distractor3 = formula.evaluate(scope);
+  const distractor3 = formula.evaluate(scope).toFixed(2);
   results["distractor3"] = distractor3;
 
   results["text"] =
@@ -95,25 +95,25 @@ exports.generate_variance_question = () => {
     b: 12,
   };
   let results = {};
-  const correct_answer = formula.evaluate(scope);
+  const correct_answer = formula.evaluate(scope).toFixed(2);
   results["correctAnswer"] = correct_answer;
   const correct_a = 2;
   const correct_b = 12;
   scope.a = getRandomInteger(1, 5, [correct_a]);
   scope.b = getRandomInteger(1, 100, [correct_b]);
-  const distractor1 = formula.evaluate(scope);
+  const distractor1 = formula.evaluate(scope).toFixed(2);
   const distr1_a = scope.a;
   const distr1_b = scope.b;
   results["distractor1"] = distractor1;
   scope.a = getRandomInteger(1, 10, [distr1_a, 2]);
   scope.b = getRandomInteger(1, 100, [distr1_b, 12]);
-  const distractor2 = formula.evaluate(scope);
+  const distractor2 = formula.evaluate(scope).toFixed(2);
   const distr2_a = scope.a;
   const distr2_b = scope.b;
   results["distractor2"] = distractor2;
   scope.a = getRandomInteger(1, 10, [distr1_a, distr2_a, 2]);
   scope.b = getRandomInteger(1, 100, [distr1_b, distr2_b, 12]);
-  const distractor3 = formula.evaluate(scope);
+  const distractor3 = formula.evaluate(scope).toFixed(2);
   results["distractor3"] = distractor3;
 
   results["text"] =
@@ -179,8 +179,8 @@ exports.generate_cdf_question = () => {
       return results;
     case 2:
       
-      a = getRandomInteger(min_value, max_value - 1, [min_value]);
-      b = getRandomInteger(a, max_value, [max_value]);
+      a = min_value;
+      b = max_value;
       x = getRandomInteger(min_value, max_value, [a, b]);
       
       let scope = {
@@ -253,7 +253,7 @@ exports.generate_cdf_question = () => {
         distr1_a,
         min_value,
       ]);
-      dist2_b = getRandomInteger(distr2_a, max_value, [distr1_b, max_value]);
+      dist2_b = getRandomInteger(distr2_a+1, max_value, [distr1_b, max_value]);
       distractor2 =
         "$\\frac{" + distr2_a + "-a}{" + (dist2_b - distr2_b) + "}$";
 
@@ -264,7 +264,7 @@ exports.generate_cdf_question = () => {
         distr2_a,
         min_value,
       ]);
-      dist3_b = getRandomInteger(dist3_a, max_value, [
+      dist3_b = getRandomInteger(dist3_a+1, max_value, [
         distr1_b,
         distr2_b,
         max_value,
