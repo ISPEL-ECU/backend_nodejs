@@ -67,6 +67,7 @@ exports.generate_mean_question = () => {
     " , " +
     max_value +
     ")?";
+    results["hint"] = "The mean is the midpoint of the interval. The midpoint is $\\frac{max+min}{2}$.";
   return results;
 };
 
@@ -139,7 +140,8 @@ exports.generate_cdf_question = () => {
   min_value = getRandomInteger(0, 10, null);
   max_value = getRandomInteger(11, 20, null);
 
-  const formula = math.parse("((max-min)^a)/b");
+  let formula;
+  let scope;
 
   let results = {};
   let correct_answer;
@@ -148,6 +150,7 @@ exports.generate_cdf_question = () => {
   let distractor3;
   let a;
   let b;
+  let x;
 
   switch (getRandomInteger(1, 3, null)) {
     case 1:
@@ -172,28 +175,42 @@ exports.generate_cdf_question = () => {
         min_value +
         "," +
         max_value +
-        "]. Find P(X=x)";
+        "]. Find P(X="+getRandomInteger(min_value, max_value, null)+")";
       return results;
     case 2:
+      
       a = getRandomInteger(min_value, max_value - 1, [min_value]);
       b = getRandomInteger(a, max_value, [max_value]);
-      correct_answer =
-        "$\\frac{x-" + min_value + "}{" + (max_value - min_value) + "}$";
-      results["correctAnswer"] = correct_answer;
+      x = getRandomInteger(min_value, max_value, [a, b]);
+      
+      let scope = {
+        a: a,
+        b: b,
+        x: x,
+        
+      };
+      formula = math.parse("(x-a)/(b-a)");
+      correct_answer = formula.evaluate(scope);
+      results["correctAnswer"] = correct_answer.toFixed(2);
       let distr1_a = getRandomInteger(min_value, max_value - 1, [min_value]);
-      let distr1_b = getRandomInteger(distr1_a, max_value, [max_value]);
-      distractor1 =
-        "$\\frac{x-" + distr1_a + "}{" + (distr1_b - distr1_a) + "}$";
+      let distr1_b = getRandomInteger(distr1_a+1, max_value, [max_value]);
+      scope.a = distr1_a;
+      scope.b = distr1_b;
+      
+      distractor1 = formula.evaluate(scope).toFixed(2);
+        
       results["distractor1"] = distractor1;
 
       distr2_a = getRandomInteger(min_value, max_value - 1, [
         distr1_a,
         min_value,
       ]);
-      distr2_b = getRandomInteger(distr2_a, max_value, [distr1_b, max_value]);
-      distractor2 =
-        "$\\frac{x-" + distr2_a + "}{" + (distr2_b - distr2_a) + "}$";
-
+      distr2_b = getRandomInteger(distr2_a+1, max_value, [distr1_b, max_value]);
+      
+      scope.a = distr2_a;
+      scope.b = distr2_b;
+      
+      distractor2 = formula.evaluate(scope).toFixed(2);
       results["distractor2"] = distractor2;
 
       distr3_a = getRandomInteger(min_value, max_value - 1, [
@@ -201,14 +218,16 @@ exports.generate_cdf_question = () => {
         distr2_a,
         min_value,
       ]);
-      distr3_b = getRandomInteger(distr3_a, max_value, [
+      distr3_b = getRandomInteger(distr3_a+1, max_value, [
         distr1_b,
         distr2_b,
         max_value,
       ]);
-      distractor3 =
-        "$\\frac{x-" + distr3_a + "}{" + (distr3_b - distr3_a) + "}$";
 
+      scope.a = distr3_a;
+      scope.b = distr3_b;
+      
+      distractor3 = formula.evaluate(scope).toFixed(2);
       results["distractor3"] = distractor3;
 
       results["text"] =
@@ -216,7 +235,7 @@ exports.generate_cdf_question = () => {
         min_value +
         "," +
         max_value +
-        "]. Find P(X$\\leq$x)";
+        "]. Find P(X$\\leq$"+x+")";
       return results;
     case 3:
       a = getRandomInteger(min_value, max_value - 1, [min_value]);
