@@ -54,6 +54,18 @@ exports.getTopics = (req, res, next) => {
   }
 };
 
+exports.postUserTopic = (req, res, next) =>{
+  const topicId = req.body.topicId;
+  const userId = req.userId;
+  Topic.findOne({where:{id: topicId}})
+  .then((topic)=>{
+    User.findOne({where: {id: userId}})
+    .then((user)=>{
+      topic.addUser(user);
+    })
+  })
+}
+
 exports.postDeleteTopic = (req, res, next) =>{
   const topicId = req.query.id;
   Topic.findOne({where:{id: topicId}})
