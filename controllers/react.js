@@ -3,7 +3,8 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const fetch = require("node-fetch");
-const math = require('mathjs');
+
+const qgen = require('../controllers/question_generation');
 
 const Topic = require("../models/topic");
 const Domain = require("../models/domain");
@@ -53,18 +54,6 @@ exports.getTopics = (req, res, next) => {
       .catch((err) => console.log(err));
   }
 };
-
-exports.postUserTopic = (req, res, next) =>{
-  const topicId = req.body.topicId;
-  const userId = req.userId;
-  Topic.findOne({where:{id: topicId}})
-  .then((topic)=>{
-    User.findOne({where: {id: userId}})
-    .then((user)=>{
-      topic.addUser(user);
-    })
-  })
-}
 
 exports.postDeleteTopic = (req, res, next) =>{
   const topicId = req.query.id;
@@ -605,6 +594,11 @@ function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
 
+
+
+
+
+
 exports.getQuestions = (req, res, next) => {
   let initialSets;
   let shuffledResults;
@@ -647,7 +641,7 @@ exports.getQuestions = (req, res, next) => {
 
        
           
-      } else {
+      } else if(quiz.question=="autoGen") {
       fetch("http://localhost:4221/" + quiz.url, { method: 'POST', body: "difficulty: ["+difficulty+"]"})
         .then((response) => {
           return response.json(); 
@@ -680,10 +674,31 @@ exports.getQuestions = (req, res, next) => {
             res.status(200).send(dataSet);
           });
         }) .catch((err) => console.log(err));
-    }})
+    } else {
+      let questionBody = qgen[quiz.url]()
+      
+      const answerString = questionBody["correctAnswer"];
+      Question.create({ value: answerString }).then((question) => {
+        let results = new Array();
+        results.push(questionBody["correctAnswer"]);
+        results.push(questionBody["distractor1"]);
+        results.push(questionBody["distractor2"]);
+        results.push(questionBody["distractor3"]);
+        const shuffledResults = shuffleArray(results);
+        const dataSet = {
+          id: question.id,
+          // title: initialSets.shift().toString(),
+          initialSets: [questionBody["text"]],
+          hint: questionBody["hint"],
+          results: shuffledResults,
+            
+        };
+        console.log(dataSet);
+        res.status(200).send(dataSet)
 
-    .catch((err) => console.log(err));
-};
+      }) }
+  
+})};
 
 exports.getCorrectAnswer = (req, res, next) => {
   const id = req.query.id;
@@ -759,13 +774,6 @@ exports.getTopicsByComplexId = async (req, res, next) => {
 
   res.send(result);
 };
-
-
-exports.getFormulaResult = (req, res, next) => {
-  const equation = req.query.equation;
-  result = math.evaluate(equation);
-  res.send({"eqresult":result});
-}
 
 
 exports.postSaveQuestionsToQuestionBank = (req, res, next) => {
