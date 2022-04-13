@@ -818,3 +818,30 @@ exports.postSaveQuestionsToQuestionBank = (req, res, next) => {
   //   })
   //   .catch((err) => console.log(err));
 };
+
+exports.getCoursesWithTopics = (req, res, next) => {
+  Course.findAll({
+    include: [
+      {
+        model: Topic,
+        as: 'topics',
+      },
+    ],
+  })
+    .then((courses) => {
+      res.send(courses);
+    })
+    .catch((err) => console.log(err));
+};
+
+exports.getCompletedTopics = (req, res, next) => {
+  const userId = req.userId;
+  User.findOne({ where: { id: userId } })
+    .then((user) => {
+      return user.getTopics();
+    })
+    .then((completedTopics) => {
+      res.send(completedTopics);
+    })
+    .catch((err) => console.log(err));
+}
