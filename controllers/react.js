@@ -829,19 +829,24 @@ exports.getCoursesWithTopics = (req, res, next) => {
     ],
   })
     .then((courses) => {
+      // res.send(courses);
+    User.findOne({ where: { id: req.userId } })
+    .then((user) => {
+      return user.getTopics();
+      
+    })
+    .then((topics) => {
+      return topics.map(topic => topic.id);
+    })
+      .then((completedTopics)=>{
+      for (let course in courses){
+        courses[course].compTopics = courses[course].topics.filter(
+          topic => completedTopics.includes(topic.id));
+         
+      }
       res.send(courses);
+    })
     })
     .catch((err) => console.log(err));
 };
 
-exports.getCompletedTopics = (req, res, next) => {
-  const userId = req.userId;
-  User.findOne({ where: { id: userId } })
-    .then((user) => {
-      return user.getTopics();
-    })
-    .then((completedTopics) => {
-      res.send(completedTopics);
-    })
-    .catch((err) => console.log(err));
-}
