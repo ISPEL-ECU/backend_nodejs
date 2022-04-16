@@ -838,12 +838,25 @@ exports.getCoursesWithTopics = (req, res, next) => {
     .then((topics) => {
       return topics.map(topic => topic.id);
     })
-      .then((completedTopics)=>{
-      const result = [];
-      result.push(courses);
-      result.push(completedTopics);
-      res.send(result);
+    .then((topics) => {
+      const coursesWithTopics = courses.map(course => {
+        const completedTopics = course.topics.filter(topic => topics.includes(topic.id));
+        const completedId = completedTopics.map(topic => topic.id);
+        return {
+          id: course.id,
+          name: course.name,
+          topics: course.topics,
+          completedTopics: completedId,
+        };
+      });
+      res.send(coursesWithTopics);
     })
+    //   .then((completedTopics)=>{
+    //   const result = [];
+    //   result.push(courses);
+    //   result.push(completedTopics);
+    //   res.send(result);
+    // })
     })
     .catch((err) => console.log(err));
 };
