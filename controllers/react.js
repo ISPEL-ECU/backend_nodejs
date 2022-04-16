@@ -839,12 +839,10 @@ exports.getCoursesWithTopics = (req, res, next) => {
       return topics.map(topic => topic.id);
     })
       .then((completedTopics)=>{
-      for (let course in courses){
-        courses[course].compTopics = courses[course].topics.filter(
-          topic => completedTopics.includes(topic.id));
-         
-      }
-      res.send(courses);
+      const result = [];
+      result.push(courses);
+      result.push(completedTopics);
+      res.send(result);
     })
     })
     .catch((err) => console.log(err));
