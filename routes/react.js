@@ -47,6 +47,7 @@ router.get('/get-questionslist', isAuth, reactController.getQuestionList);
 router.post('/save-qbq', reactController.postSaveQuestionsToQuestionBank);
 router.post('/post-usertopic', isAuth, reactController.postUserTopic);
 router.get('/get-courses-with-topics', isAuth, reactController.getCoursesWithTopics);
+router.get('/get-user-topics', isAuth, reactController.getUserTopics);
 //router.get('/get-questionbanks', isAuth, reactController.getQuestionBanks);
 //router.get('/get-user-role', isAuth, isAdmin, reactController.getUserRole);
 

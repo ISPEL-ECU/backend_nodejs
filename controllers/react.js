@@ -882,3 +882,25 @@ exports.postUserTopic = (req, res, next) => {
     })
 
 }
+
+exports.getUserTopics = (req, res, next) => {
+  
+    const userId = req.userId;
+  
+    User.findOne({ where: { id: userId } })
+  
+      .then((user) => {
+  
+        return user.getTopics();
+  
+      })
+  
+      .then((topics) => {
+  
+        res.send(topics);
+  
+      })
+  
+      .catch((err) => console.log(err));
+  
+  }
