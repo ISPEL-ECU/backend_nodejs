@@ -18,7 +18,7 @@ const Topic = sequelize.define('topic', {
   },
   name: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
       unique: true
   },
   
@@ -42,6 +42,11 @@ isPrivate: {
 markedForDelition: {
     type: DataTypes.BOOLEAN,
     allowNull: true
+},
+hasQuiz: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+
 }
 
 });

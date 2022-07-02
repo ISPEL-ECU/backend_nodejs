@@ -79,7 +79,7 @@ Topic.belongsToMany(Keyword, {
   // Role.sync({ alter: true });
  //Course.sync({ force: true });
   // Quiz.sync({ alter: true });
-  
+  Topic.sync({ alter: true });
   
   
 

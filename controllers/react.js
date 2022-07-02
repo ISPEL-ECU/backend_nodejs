@@ -842,13 +842,24 @@ exports.getCoursesWithTopics = (req, res, next) => {
       const coursesWithTopics = courses.map(course => {
         const completedTopics = course.topics.filter(topic => topics.includes(topic.id));
         const completedId = completedTopics.map(topic => topic.id);
+        const completedTopicIds = completedTopics.map(topic => topic.topicId)
+        const topics_list = JSON.parse(course.topics_list).map(topic => {
+          if (topic.startsWith('#')){
+            return({type: "header", value:topic});
+          } else {
+            return({type: "topic", value:course.topics.find(tp=>{return tp.topicId==topic}), id: topic});
+            }
+          
+          })
         return {
           id: course.id,
           name: course.name,
           topics: course.topics,
           completedTopics: completedId,
+          completedTopicIds: completedTopicIds,
+          topics_list: topics_list
         };
-      });
+      })
       res.send(coursesWithTopics);
     })
     //   .then((completedTopics)=>{
