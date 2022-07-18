@@ -915,3 +915,14 @@ exports.getUserTopics = (req, res, next) => {
       .catch((err) => console.log(err));
   
   }
+
+  exports.postSaveDomain = (req, res, next) => {
+    const domain = req.body.domain;
+    const shortName = req.body.shortName;
+   Domain.create({
+    name: domain,
+    shortName: shortName
+  }).then((domain)=>{
+    res.send(domain);
+  })
+  }
