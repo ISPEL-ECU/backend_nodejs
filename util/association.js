@@ -11,6 +11,7 @@ const Role = require('../models/role');
 const Quiz = require('../models/quiz');
 const Question = require('../models/question');
 const Course = require('../models/course');
+const Asset = require('../models/asset');
 const QuestionBank = require("../models/questionbank");
 const QuestionFromBank = require("../models/bankquestions");
 
@@ -71,6 +72,13 @@ Topic.belongsToMany(Keyword, {
     through: "course-topic"
   });
 
+  Topic.belongsToMany(Asset, {
+    through: "topic-asset"
+    });
+  Asset.belongsToMany(Topic, {
+    through: "topic-asset"
+    });
+
   QuestionBank.sync({alter: true});
   QuestionFromBank.sync({alter: true});
  //Course.sync({alter: true});
@@ -79,7 +87,7 @@ Topic.belongsToMany(Keyword, {
   // Role.sync({ alter: true });
  //Course.sync({ force: true });
   // Quiz.sync({ alter: true });
-  Topic.sync({ alter: true });
+  // Topic.sync({ alter: true });
   
   
 
@@ -87,6 +95,10 @@ Topic.belongsToMany(Keyword, {
   // Role.create({roleName : "Faculty", roleCode : "fct"});
   // Role.create({roleName : "Student", roleCode : "fct"});
 
-}
+  
+
+ 
+
+} 
 
 module.exports={define};

@@ -57,10 +57,15 @@ app.use(
   ])
 );
 app.use(express.static(path.join(__dirname, "public"))); //provide static access to the public folder
+
 app.use(express.static(path.join(__dirname, "build")));
 app.use(
   "/author/topic/rmdhtml",
   express.static(path.join(__dirname, "rmdhtml"))
+);
+app.use(
+  "/author/topic/Video",
+  express.static(path.join(__dirname, "Video"))
 );
 
 routes.define(app);
