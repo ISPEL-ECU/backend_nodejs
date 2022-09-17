@@ -3,7 +3,7 @@ const isAuth = require("./middleware/is-react-auth");
 const PORT = 3000;
 
 const express = require("express");
-//const bodyParser = require("body-parser");
+const bodyParser = require("body-parser");
 const path = require("path");
 const multer = require("multer");
 
@@ -17,7 +17,7 @@ const app = express();
 
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname);
-  if (ext.toLowerCase() !== ".html" && ext.toLowerCase() !== ".rmd") {
+  if (ext.toLowerCase() !== ".mp4" && ext.toLowerCase() !== ".avi" && ext.toLowerCase() !== ".html" && ext.toLowerCase() !== ".rmd") {
     console.log(ext);
     cb(new Error("Wrong file type"), false);
   } else {
@@ -25,9 +25,14 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
+    if (file.mimetype === "video/mp4" || file.mimetype === "video/avi") {
+      cb(null, "Video");
+    } else {
     cb(null, "rmdhtml");
+    }
   },
   filename: (req, file, cb) => {
     //if run under Windows - use file.originalname, for the server use construction with Date
@@ -36,8 +41,10 @@ const fileStorage = multer.diskStorage({
   },
 });
 
+
+
 app.use(cors());
-//app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use(
   express.urlencoded({
     extended: true,
@@ -47,7 +54,7 @@ app.use(
 app.use(express.json());
 app.use(
   multer({
-    limits: { fieldSize: 25 * 1024 * 1024 },
+    limits: { fieldSize: 500 * 1024 * 1024 },
     storage: fileStorage,
     fileFilter: fileFilter,
   }).fields([
@@ -56,6 +63,9 @@ app.use(
     { name: "assetsUpload" },
   ])
 );
+
+
+
 app.use(express.static(path.join(__dirname, "public"))); //provide static access to the public folder
 
 app.use(express.static(path.join(__dirname, "build")));

@@ -49,6 +49,10 @@ router.post('/post-usertopic', isAuth, reactController.postUserTopic);
 router.get('/get-courses-with-topics', isAuth, reactController.getCoursesWithTopics);
 router.get('/get-user-topics', isAuth, reactController.getUserTopics);
 router.post('/save-domain', isAuth, reactController.postSaveDomain);
+router.get('/get-assets4topic', reactController.getAssetsForTopic);
+router.post('/save-asset', isAuth, reactController.postSaveAsset);
+router.get('/get-assets', isAuth, reactController.getAssets);
+router.post('/save-asset4topic', isAuth, reactController.postSaveAssetToTopic);
 //router.get('/get-questionbanks', isAuth, reactController.getQuestionBanks);
 //router.get('/get-user-role', isAuth, isAdmin, reactController.getUserRole);
 

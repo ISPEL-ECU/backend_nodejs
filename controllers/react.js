@@ -19,6 +19,7 @@ const Question = require("../models/question");
 const Quiz = require("../models/quiz");
 const QuestionBank = require("../models/questionbank");
 const QuestionFromBank = require("../models/bankquestions");
+const Asset = require("../models/asset");
 
 
 const { Op } = require("sequelize");
@@ -925,4 +926,45 @@ exports.getUserTopics = (req, res, next) => {
   }).then((domain)=>{
     res.send(domain);
   })
+  }
+
+  exports.getAssetsForTopic = (req, res, next) => {
+    const topicId = req.query.topicId;
+    Topic.findOne({where:{id:topicId}}).then((topic)=>{
+      topic.getAssets().then((assets)=>{
+        res.send(assets);
+      })
+      
+    })
+  }
+
+  exports.postSaveAsset = (req, res, next) => {
+    const assetName = req.body.name;
+    const contentFile = req.files["contentUpload"][0];
+    Asset.create({
+      name: assetName,
+      contentHtml: contentFile.path,
+    }).then((asset)=>{
+      res.send(asset);
+    }).catch((err)=>{
+      console.log(err);
+    });
+
+  }
+
+  exports.getAssets = (req, res, next) => {
+    Asset.findAll().then((assets)=>{
+      res.send(assets);
+    })
+  }
+
+  exports.postSaveAssetToTopic = (req, res, next) => {
+    const topicId = req.body.topicId;
+    const assetId = req.body.assetId;
+    Topic.findOne({where:{id:topicId}}).then((topic)=>{
+      Asset.findOne({where:{id:assetId}}).then((asset)=>{
+        topic.addAsset(asset);
+        res.send(true);
+      })
+    })
   }
